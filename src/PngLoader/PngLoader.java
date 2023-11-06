@@ -2,13 +2,8 @@ package PngLoader;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.MemoryImageSource;
 import java.io.*;
-import java.rmi.RemoteException;
 import java.util.Arrays;
-
-import static java.lang.Math.abs;
-import static java.lang.Math.cbrt;
 
 public class PngLoader {
     public final PngInfo imageInfo;

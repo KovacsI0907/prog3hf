@@ -6,8 +6,6 @@ public final class PngLogger {
     static final private boolean showDebug = true;
     static final private boolean showInfo = false;
 
-    private static final Logger builtInLogger = Logger.getLogger("Global Logger");
-
     public static void info(String msg){
         if(showInfo)
             System.out.println("INFO: " + msg);
