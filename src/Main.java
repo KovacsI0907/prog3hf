@@ -19,7 +19,7 @@ public class Main {
 
         // Load the image
         try {
-            File imageFile = new File("test.png"); // Replace with the path to your image
+            File imageFile = new File("test4.png"); // Replace with the path to your image
             PngLoader loader = new PngLoader(imageFile);
             Image image = loader.getImage();
             label.setIcon(new ImageIcon(image));

@@ -9,12 +9,15 @@ public class IDATLoader {
     private long currentPos;
     private long currentLength;
     private boolean endOfImage = false;
+    private int debugCounter = 0;
 
     public IDATLoader(InputStream is) throws IOException {
+        PngLogger.info("Initializing IDAT loader");
         this.is = is;
         currentPos = 0;
         currentLength = 0;
         startNewIDAT();
+        PngLogger.info("IDAT loader initialized");
     }
 
     private void skipCRC() throws IOException {
@@ -27,12 +30,16 @@ public class IDATLoader {
             throw new PngLoaderException("Attempt to start new IDAT before finishing other");
         }
 
+        debugCounter++;
+        PngLogger.info("Starting new IDAT after: currentPos: " + currentPos + " currentLength: " + currentLength + "\nstarted " + debugCounter + " times");
+
         currentPos = 0;
         currentLength = Helper.readUint32(is);
         String chunkType = Helper.readChunkType(is);
 
         if(chunkType.equals("IEND")){
             endOfImage = true;
+            PngLogger.info("IDATLoader reached IEND");
             return false;
         }else if(!chunkType.equals("IDAT")){
             throw new PngLoaderException("IDAT or IEND chunk expected, got '" + chunkType + "'");

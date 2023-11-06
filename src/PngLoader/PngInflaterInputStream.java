@@ -12,6 +12,7 @@ public class PngInflaterInputStream extends InflaterInputStream {
     public PngInflaterInputStream(InputStream in, Inflater inf, int size) throws IOException {
         super(in, inf, size);
         idatLoader = new IDATLoader(in);
+        PngLogger.info("Png inflater initialized");
     }
 
     public PngInflaterInputStream(InputStream in, Inflater inf) throws IOException {
