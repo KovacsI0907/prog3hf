@@ -15,16 +15,13 @@ public class PngInfo {
         this.filterMethod = filterMethod;
         this.interlaceMethod = interlaceMethod;
 
-        //TODO extend to all image types
-        bytesPerPixel = -1;
-        if(bitDepth == 8){
-            if(colorType == 2){
-                bytesPerPixel = 3;
-            }if(colorType == 6){
-                bytesPerPixel = 4;
-            }
-        }
-        this.bytesPerPixel = bytesPerPixel;
+        numChannels = switch(colorType) {
+            case 0 -> 1;
+            case 2 -> 3;
+            case 4 -> 2;
+            case 6 -> 4;
+            default -> 0;
+        };
     }
 
     final int width;
@@ -34,8 +31,7 @@ public class PngInfo {
     final byte compressionMethod;
     final byte filterMethod;
     final byte interlaceMethod;
-
-    final int bytesPerPixel;
+    final int numChannels;
 
     public String toString() {
         return

@@ -113,19 +113,23 @@ public class PngLoader {
         PngLogger.info("Skipping CRC");
     }
     private void loadNextScanline() throws IOException {
+        //TODO find better way to do this
+        int bpp = 4;
         if(currentLine == null){
-            currentLine = new UnsignedByte[imageInfo.width * imageInfo.bytesPerPixel + 1];
+            currentLine = new UnsignedByte[imageInfo.width * bpp + 1];
         }
-        Helper.readExactlyNUBytes(pngInflaterInputStream, imageInfo.width *imageInfo.bytesPerPixel + 1, currentLine, 0);
+        Helper.readExactlyNUBytes(pngInflaterInputStream, imageInfo.width *bpp + 1, currentLine, 0);
         currentHeight++;
         PngLogger.info("currentLine: " + currentHeight + "/" + imageInfo.height);
     }
 
     void getNextUnfilteredLine() throws IOException {
+        //TODO find better way to do this
+        int bpp = 4;
         //load the unfiltered scanline into currentLine
         loadNextScanline();
 
-        currentUnfilteredLine = new UnsignedByte[(int) (imageInfo.width * imageInfo.bytesPerPixel)];
+        currentUnfilteredLine = new UnsignedByte[(int) (imageInfo.width * bpp)];
 
         for(int i = 0;i<currentUnfilteredLine.length;i++) {
             //bytes used by the filtering
@@ -134,7 +138,7 @@ public class PngLoader {
             //   ax
             UnsignedByte a, b, c;
 
-            boolean firstPixel = i < imageInfo.bytesPerPixel;
+            boolean firstPixel = i < bpp;
             boolean firstLine = previousUnfilteredLine == null;
 
             if(firstLine && firstPixel){
@@ -144,15 +148,15 @@ public class PngLoader {
             }else if (firstLine){//but not first pixel
                 b = new UnsignedByte(0);
                 c = new UnsignedByte(0);
-                a = currentUnfilteredLine[i- imageInfo.bytesPerPixel];
+                a = currentUnfilteredLine[i- bpp];
             }else if (firstPixel){//but not first line
                 a = new UnsignedByte(0);
                 c = new UnsignedByte(0);
                 b = previousUnfilteredLine[i];
             }else{
-                a = currentUnfilteredLine[i - imageInfo.bytesPerPixel];
+                a = currentUnfilteredLine[i - bpp];
                 b = previousUnfilteredLine[i];
-                c = previousUnfilteredLine[i - imageInfo.bytesPerPixel];
+                c = previousUnfilteredLine[i - bpp];
             }
 
             currentUnfilteredLine[i] = reconstructByte(currentLine[0], a, b, c, currentLine[i+1]);
@@ -213,13 +217,15 @@ public class PngLoader {
 
 
     public Image getImage() throws IOException {
+        //TODO find better way to do this
+        int bpp = 4;
         int[] pixels = new int[imageInfo.width * imageInfo.height];
 
         for(int y = 0;y<imageInfo.height;y++){
             getNextUnfilteredLine();
             for(int x = 0;x<imageInfo.width;x++){
                 int pixelIndex = y* imageInfo.width + x;
-                pixels[pixelIndex] = byte4ToPixel(currentUnfilteredLine, x*imageInfo.bytesPerPixel, imageInfo.bytesPerPixel);
+                pixels[pixelIndex] = byte4ToPixel(currentUnfilteredLine, x*bpp, bpp);
             }
         }
 
