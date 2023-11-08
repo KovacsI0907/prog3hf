@@ -139,6 +139,8 @@ public class PngLoader {
         return bytesToLoad;
     }
     private void loadNextScanline() throws IOException {
+
+
         if(currentLine == null){
             currentLine = new UnsignedByte[getLineLengthInBytes() + 1]; // +1 for filter type byte
         }
