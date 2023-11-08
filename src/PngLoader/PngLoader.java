@@ -1,5 +1,6 @@
 package PngLoader;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -10,9 +11,9 @@ public class PngLoader {
     private int currentHeight;
 
     PngInflaterInputStream pngInflaterInputStream;
-    byte[] currentLine = null;
-    byte[] currentUnfilteredLine = null;
-    byte[] previousUnfilteredLine = null;
+    UnsignedByte[] currentLine = null;
+    UnsignedByte[] currentUnfilteredLine = null;
+    UnsignedByte[] previousUnfilteredLine = null;
 
 
 
@@ -27,7 +28,7 @@ public class PngLoader {
         PngLogger.info("Mark supported OK");
 
         //check PNG signature
-        if(!checkSignature( Helper.readExactlyNBytes(bis, 8) )){
+        if(!checkSignature( Helper.readExactlyNBytes(bis, 8))){
             throw new RuntimeException("Incorrect signature");
         }
 
@@ -113,9 +114,9 @@ public class PngLoader {
     }
     private void loadNextScanline() throws IOException {
         if(currentLine == null){
-            currentLine = new byte[(int)imageInfo.width* imageInfo.bytesPerPixel + 1];
+            currentLine = new UnsignedByte[(int)imageInfo.width* imageInfo.bytesPerPixel + 1];
         }
-        Helper.readExactlyNBytes(pngInflaterInputStream, (int)imageInfo.width*imageInfo.bytesPerPixel + 1, currentLine, 0);
+        Helper.readExactlyNUBytes(pngInflaterInputStream, (int)imageInfo.width*imageInfo.bytesPerPixel + 1, currentLine, 0);
         currentHeight++;
         PngLogger.info("currentLine: " + currentHeight + "/" + imageInfo.height);
     }
@@ -124,32 +125,34 @@ public class PngLoader {
         //load the unfiltered scanline into currentLine
         loadNextScanline();
 
-        currentUnfilteredLine = new byte[(int) (imageInfo.width * imageInfo.bytesPerPixel)];
-
-        //logFilterType(currentLine[0], currentHeight);
+        currentUnfilteredLine = new UnsignedByte[(int) (imageInfo.width * imageInfo.bytesPerPixel)];
 
         for(int i = 0;i<currentUnfilteredLine.length;i++) {
             //bytes used by the filtering
             //looks like this = (x is the current pixel)
             //   cb
             //   ax
-            byte a, b, c;
+            UnsignedByte a, b, c;
 
             boolean firstPixel = i < imageInfo.bytesPerPixel;
             boolean firstLine = previousUnfilteredLine == null;
 
             if(firstLine && firstPixel){
-                c = a = b = 0;
+                a = new UnsignedByte(0);
+                b = new UnsignedByte(0);
+                c = new UnsignedByte(0);
             }else if (firstLine){//but not first pixel
-                c = b = 0;
+                b = new UnsignedByte(0);
+                c = new UnsignedByte(0);
                 a = currentUnfilteredLine[i- imageInfo.bytesPerPixel];
             }else if (firstPixel){//but not first line
-                c = a = 0;
+                a = new UnsignedByte(0);
+                c = new UnsignedByte(0);
                 b = previousUnfilteredLine[i];
             }else{
-                a = currentUnfilteredLine[i- imageInfo.bytesPerPixel];
+                a = currentUnfilteredLine[i - imageInfo.bytesPerPixel];
                 b = previousUnfilteredLine[i];
-                c = previousUnfilteredLine[i- imageInfo.bytesPerPixel];
+                c = previousUnfilteredLine[i - imageInfo.bytesPerPixel];
             }
 
             currentUnfilteredLine[i] = reconstructByte(currentLine[0], a, b, c, currentLine[i+1]);
@@ -158,55 +161,28 @@ public class PngLoader {
         previousUnfilteredLine = currentUnfilteredLine;
     }
 
-    byte reconstructByte(byte filterTypeByte, byte a, byte b, byte c, byte x){
-        if(currentHeight == 1){
-            PngLogger.debug("" + x);
-        }
-        return switch (filterTypeByte) {
+    UnsignedByte reconstructByte(UnsignedByte filterTypeByte, UnsignedByte a, UnsignedByte b, UnsignedByte c, UnsignedByte x){
+        return switch (filterTypeByte.value) {
             case 0 -> //NONE
                     x;
             case 1 -> //SUB
-                    (byte) ((x + a) & 0xff);
+                    UnsignedByte.fromIntMod256(x.value + a.value);
             case 2 -> //UP
-                    (byte) (x + b);
+                    UnsignedByte.fromIntMod256(x.value + b.value);
             case 3 -> //AVERAGE
-                    (byte) (x + (a + b) / 2);
+                    UnsignedByte.fromIntMod256((x.value + (a.value + b.value)/2));
             case 4 -> //PAETH
-                    (byte) (x + paethPredictor(a, b, c));
+                    UnsignedByte.fromIntMod256(x.value + paethPredictor(a, b, c).value);
             default -> throw new RuntimeException("Filter type byte is not within acceptable values");
         };
     }
 
-    void logFilterType(int filterTypeByte, int rowNumber) {
-        switch (filterTypeByte) {
-            case 0:
-                PngLogger.debug("Current scanline filter type is NONE at line " + rowNumber);
-                break;
-            case 1:
-                PngLogger.debug("Current scanline filter type is SUB at line " + rowNumber);
-                break;
-            case 2:
-                PngLogger.debug("Current scanline filter type is UP at line " + rowNumber);
-                break;
-            case 3:
-                PngLogger.debug("Current scanline filter type is AVERAGE at line " + rowNumber);
-                break;
-            case 4:
-                PngLogger.debug("Current scanline filter type is PAETH at line " + rowNumber);
-                break;
-            default:
-                PngLogger.debug("Filter type byte is not within acceptable values at line " + rowNumber);
-        }
-    }
-
-
-
-    byte paethPredictor(byte a, byte b, byte c){
-        byte Pr;
-        byte p = (byte) (a + b - c);
-        byte pa = (byte) Math.abs(p - a);
-        byte pb = (byte) Math.abs(p - b);
-        byte pc = (byte) Math.abs(p - c);
+    UnsignedByte paethPredictor(UnsignedByte a, UnsignedByte b, UnsignedByte c){
+        UnsignedByte Pr;
+        int p = a.value + b.value - c.value;
+        int pa = Math.abs(p - a.value);
+        int pb = Math.abs(p - b.value);
+        int pc = Math.abs(p - c.value);
         if (pa <= pb && pa <= pc){
             Pr = a;
         }else if (pb <= pc){
@@ -218,6 +194,23 @@ public class PngLoader {
 
         return Pr;
     }
+
+    public static String intToHexWithFixedLength(int value) {
+        // Convert the integer to a hexadecimal string with leading zeros
+        String hexString = String.format("%08X", value);
+
+        // Insert spaces between pairs of characters (e.g., "00AABBCC" -> "00 AA BB CC")
+        StringBuilder formattedHex = new StringBuilder();
+        for (int i = 0; i < hexString.length(); i += 2) {
+            formattedHex.append(hexString, i, i + 2);
+            if (i + 2 < hexString.length()) {
+                formattedHex.append(" ");
+            }
+        }
+
+        return formattedHex.toString();
+    }
+
 
     public Image getImage() throws IOException {
         int[] pixels = new int[(int)imageInfo.width * (int)imageInfo.height];
@@ -233,24 +226,29 @@ public class PngLoader {
         return drawImage((int) imageInfo.width, (int) imageInfo.height, pixels);
     }
 
-    public int byte4ToPixel(byte[] arr, int offset, int bytesPerPixel){
-        int r = arr[offset] & 0xff;
-        int g = arr[offset+1] & 0xff;
-        int b = arr[offset+2] & 0xff;
+    public int byte4ToPixel(UnsignedByte[] arr, int offset, int bytesPerPixel){
+        int r = arr[offset].value;
+        int g = arr[offset+1].value;
+        int b = arr[offset+2].value;
         int a = 255;
 
         //TODO replace with more universal solution
         if(bytesPerPixel == 4) {
-            a = arr[offset + 3] & 0xff;
+            a = arr[offset + 3].value;
         }
 
         return (a << 24) | (r << 16) | g << 8 | b;
     }
 
     public static BufferedImage drawImage(int width, int height, int[] pixels) {
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        //height = 154;
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
 
-        image.setRGB(0, 0, width, height, pixels, 0, width);
+        for(int y = 0;y<height;y++){
+            for(int x = 0;x<width;x++){
+                image.setRGB(x,y, pixels[y*width + x]);
+            }
+        }
 
         return image;
     }
