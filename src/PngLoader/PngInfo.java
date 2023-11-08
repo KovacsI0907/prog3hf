@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 //Class for storing png parameters and validating whether this type of image is supported.
 public class PngInfo {
-    public PngInfo(long width, long height, byte bitDepth, byte colorType, byte compressionMethod, byte filterMethod, byte interlaceMethod) {
+    public PngInfo(int width, int height, byte bitDepth, byte colorType, byte compressionMethod, byte filterMethod, byte interlaceMethod) {
         int bytesPerPixel;
         this.width = width;
         this.height = height;
@@ -27,8 +27,8 @@ public class PngInfo {
         this.bytesPerPixel = bytesPerPixel;
     }
 
-    final long width;
-    final long height;
+    final int width;
+    final int height;
     final byte bitDepth;
     final byte colorType;
     final byte compressionMethod;
