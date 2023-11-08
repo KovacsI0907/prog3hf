@@ -112,21 +112,51 @@ public class PngLoader {
         Helper.readExactlyNBytes(is, 4);
         PngLogger.info("Skipping CRC");
     }
-    private void loadNextScanline() throws IOException {
-        if(currentLine == null){
-            currentLine = new UnsignedByte[imageInfo.width * imageInfo.bytesPerPixel + 1];
+
+    private int getLineLengthInBytes() {
+        int bytesToLoad;
+
+        if(imageInfo.bitDepth <= 4) {
+            //this only occurs with grayscale without alpha (since indexed color is not supported)
+
+            int pixelsPerByte = 8 / imageInfo.bitDepth;
+            bytesToLoad = (int) Math.ceil((double) imageInfo.width / pixelsPerByte);
+        }else{
+            int numChannels = switch (imageInfo.colorType) {
+                case 2 -> //truecolor
+                        3;
+                case 4 -> //grayscale with alpha
+                        2;
+                case 6 -> //truecolor with alpha
+                        4;
+                default -> throw new RuntimeException("Invalid color type");
+            };
+
+            int bytesPerPixel = imageInfo.bitDepth/8 * numChannels;
+            bytesToLoad = imageInfo.width * bytesPerPixel;
         }
-        Helper.readExactlyNUBytes(pngInflaterInputStream, imageInfo.width *imageInfo.bytesPerPixel + 1, currentLine, 0);
+
+        return bytesToLoad;
+    }
+    private void loadNextScanline() throws IOException {
+
+
+        if(currentLine == null){
+            currentLine = new UnsignedByte[getLineLengthInBytes() + 1]; // +1 for filter type byte
+        }
+        Helper.readExactlyNUBytes(pngInflaterInputStream, currentLine.length, currentLine, 0);
         currentHeight++;
         PngLogger.info("currentLine: " + currentHeight + "/" + imageInfo.height);
     }
 
     void getNextUnfilteredLine() throws IOException {
-        //load the unfiltered scanline into currentLine
+        //load the filtered scanline into currentLine
         loadNextScanline();
 
-        currentUnfilteredLine = new UnsignedByte[(int) (imageInfo.width * imageInfo.bytesPerPixel)];
+        currentUnfilteredLine = new UnsignedByte[currentLine.length - 1]; //-1 because filter type byte is not needed
 
+        // reconstruct original values
+        // this is the same for all image types, since filtering is implemented on a per-byte basis
         for(int i = 0;i<currentUnfilteredLine.length;i++) {
             //bytes used by the filtering
             //looks like this = (x is the current pixel)
@@ -253,5 +283,3 @@ public class PngLoader {
         return image;
     }
 }
-
-
