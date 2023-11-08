@@ -21,16 +21,12 @@ public class UnsignedByte {
         this.value = (short)(defaultByte & 0xff);
     }
 
-    public UnsignedByte add(UnsignedByte unsignedByte){
-        return new UnsignedByte((this.value + unsignedByte.value) % 256);
+    @Override
+    public String toString() {
+        return Integer.toString(this.value);
     }
 
-    public UnsignedByte sub(UnsignedByte unsignedByte){
-        int val = this.value - unsignedByte.value;
-        if(val < 0){
-            val += 256;
-        }
-
-        return new UnsignedByte(val);
+    public static UnsignedByte fromIntMod256(int num){
+        return new UnsignedByte(num%256);
     }
 }
