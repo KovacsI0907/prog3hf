@@ -6,6 +6,15 @@ import java.nio.charset.StandardCharsets;
 
 public final class Helper {
 
+    static void readExactlyNUBytes(InputStream is, int n, UnsignedByte[] destBuf, int offset) throws IOException {
+        //TODO optimize for memory usage
+        byte[] bytes = new byte[n];
+        readExactlyNBytes(is, n, bytes, 0);
+        for(int i = 0;i<bytes.length;i++){
+            destBuf[offset + i] = new UnsignedByte(bytes[i]);
+        }
+    }
+
     //converts a uint32(represented by a byte[4]) to a java long
     static long uint32BytesToLong(byte[] byteArr, int offset) {
         if(offset + 4 > byteArr.length)
