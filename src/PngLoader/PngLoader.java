@@ -154,7 +154,6 @@ public class PngLoader {
         currentUnfilteredLine = new UnsignedByte[currentLine.length - 1]; //-1 because filter type byte is not needed
 
         // reconstruct original values
-        // this is the same for all image types, since filtering is implemented on a per-byte basis
         for(int i = 0;i<currentUnfilteredLine.length;i++) {
             //bytes used by the filtering
             //looks like this = (x is the current pixel)
