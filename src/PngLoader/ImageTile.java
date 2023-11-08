@@ -18,7 +18,7 @@ public class ImageTile {
     // (it's a 2d array of pixel channels)
     int[][][] pixelValues;
 
-    public ImageTile(int upperLeftX, int upperLeftY, int lowerRightX, int lowerRightY, PngInfo imageInfo, int paddingSize int[][][] pixelValues) {
+    public ImageTile(int upperLeftX, int upperLeftY, int lowerRightX, int lowerRightY, PngInfo imageInfo, int paddingSize, int[][][] pixelValues) {
         if(pixelValues.length != lowerRightX - upperLeftX + paddingSize ||
                 pixelValues[0].length != lowerRightY - upperLeftY + paddingSize ||
                 pixelValues[0][0].length != imageInfo.numChannels
