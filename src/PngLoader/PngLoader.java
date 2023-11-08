@@ -80,8 +80,8 @@ public class PngLoader {
         byte[] dataBytes = Helper.readExactlyNBytes(is, 13);
 
         return new PngInfo(
-                Helper.uint32BytesToLong(dataBytes, 0),
-                Helper.uint32BytesToLong(dataBytes, 4),
+                (int)Helper.uint32BytesToLong(dataBytes, 0),
+                (int)Helper.uint32BytesToLong(dataBytes, 4),
                 dataBytes[8],
                 dataBytes[9],
                 dataBytes[10],
@@ -114,9 +114,9 @@ public class PngLoader {
     }
     private void loadNextScanline() throws IOException {
         if(currentLine == null){
-            currentLine = new UnsignedByte[(int)imageInfo.width* imageInfo.bytesPerPixel + 1];
+            currentLine = new UnsignedByte[imageInfo.width * imageInfo.bytesPerPixel + 1];
         }
-        Helper.readExactlyNUBytes(pngInflaterInputStream, (int)imageInfo.width*imageInfo.bytesPerPixel + 1, currentLine, 0);
+        Helper.readExactlyNUBytes(pngInflaterInputStream, imageInfo.width *imageInfo.bytesPerPixel + 1, currentLine, 0);
         currentHeight++;
         PngLogger.info("currentLine: " + currentHeight + "/" + imageInfo.height);
     }
@@ -213,17 +213,17 @@ public class PngLoader {
 
 
     public Image getImage() throws IOException {
-        int[] pixels = new int[(int)imageInfo.width * (int)imageInfo.height];
+        int[] pixels = new int[imageInfo.width * imageInfo.height];
 
         for(int y = 0;y<imageInfo.height;y++){
             getNextUnfilteredLine();
             for(int x = 0;x<imageInfo.width;x++){
-                int pixelIndex = (int) (y* imageInfo.width + x);
+                int pixelIndex = y* imageInfo.width + x;
                 pixels[pixelIndex] = byte4ToPixel(currentUnfilteredLine, x*imageInfo.bytesPerPixel, imageInfo.bytesPerPixel);
             }
         }
 
-        return drawImage((int) imageInfo.width, (int) imageInfo.height, pixels);
+        return drawImage(imageInfo.width, imageInfo.height, pixels);
     }
 
     public int byte4ToPixel(UnsignedByte[] arr, int offset, int bytesPerPixel){
