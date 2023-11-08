@@ -163,7 +163,7 @@ public class PngLoader {
             //   ax
             UnsignedByte a, b, c;
 
-            boolean firstPixel = i < bpp;
+            boolean firstPixel = i < imageInfo.numChannels;
             boolean firstLine = previousUnfilteredLine == null;
 
             if(firstLine && firstPixel){
@@ -173,15 +173,15 @@ public class PngLoader {
             }else if (firstLine){//but not first pixel
                 b = new UnsignedByte(0);
                 c = new UnsignedByte(0);
-                a = currentUnfilteredLine[i- bpp];
+                a = currentUnfilteredLine[i- imageInfo.numChannels];
             }else if (firstPixel){//but not first line
                 a = new UnsignedByte(0);
                 c = new UnsignedByte(0);
                 b = previousUnfilteredLine[i];
             }else{
-                a = currentUnfilteredLine[i - bpp];
+                a = currentUnfilteredLine[i - imageInfo.numChannels];
                 b = previousUnfilteredLine[i];
-                c = previousUnfilteredLine[i - bpp];
+                c = previousUnfilteredLine[i - imageInfo.numChannels];
             }
 
             currentUnfilteredLine[i] = reconstructByte(currentLine[0], a, b, c, currentLine[i+1]);
@@ -238,49 +238,5 @@ public class PngLoader {
         }
 
         return formattedHex.toString();
-    }
-
-
-    public Image getImage() throws IOException {
-        //TODO find better way to do this
-        int bpp = 4;
-        int[] pixels = new int[imageInfo.width * imageInfo.height];
-
-        for(int y = 0;y<imageInfo.height;y++){
-            getNextUnfilteredLine();
-            for(int x = 0;x<imageInfo.width;x++){
-                int pixelIndex = y* imageInfo.width + x;
-                pixels[pixelIndex] = byte4ToPixel(currentUnfilteredLine, x*bpp, bpp);
-            }
-        }
-
-        return drawImage(imageInfo.width, imageInfo.height, pixels);
-    }
-
-    public int byte4ToPixel(UnsignedByte[] arr, int offset, int bytesPerPixel){
-        int r = arr[offset].value;
-        int g = arr[offset+1].value;
-        int b = arr[offset+2].value;
-        int a = 255;
-
-        //TODO replace with more universal solution
-        if(bytesPerPixel == 4) {
-            a = arr[offset + 3].value;
-        }
-
-        return (a << 24) | (r << 16) | g << 8 | b;
-    }
-
-    public static BufferedImage drawImage(int width, int height, int[] pixels) {
-        //height = 154;
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_4BYTE_ABGR);
-
-        for(int y = 0;y<height;y++){
-            for(int x = 0;x<width;x++){
-                image.setRGB(x,y, pixels[y*width + x]);
-            }
-        }
-
-        return image;
     }
 }
