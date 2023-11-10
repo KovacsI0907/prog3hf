@@ -24,14 +24,14 @@ public class PngInfo {
         };
     }
 
-    final int width;
-    final int height;
-    final byte bitDepth;
-    final byte colorType;
-    final byte compressionMethod;
-    final byte filterMethod;
-    final byte interlaceMethod;
-    final int numChannels;
+    final public int width;
+    final public int height;
+    final public byte bitDepth;
+    final public byte colorType;
+    final public byte compressionMethod;
+    final public byte filterMethod;
+    final public byte interlaceMethod;
+    final public int numChannels;
 
     public String toString() {
         return

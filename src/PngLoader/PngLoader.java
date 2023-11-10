@@ -8,6 +8,8 @@ import java.util.Arrays;
 
 public class PngLoader {
     public final PngInfo imageInfo;
+
+    //index of the current unfiltered scanline
     private int currentHeight;
 
     PngInflaterInputStream pngInflaterInputStream;
@@ -59,7 +61,6 @@ public class PngLoader {
         skipNonIDAT(bis);
 
         this.pngInflaterInputStream = new PngInflaterInputStream(bis);
-        currentHeight = 0;
         //init done
     }
     boolean checkSignature(byte[] signature){
@@ -145,11 +146,12 @@ public class PngLoader {
             currentLine = new UnsignedByte[getLineLengthInBytes() + 1]; // +1 for filter type byte
         }
         Helper.readExactlyNUBytes(pngInflaterInputStream, currentLine.length, currentLine, 0);
-        currentHeight++;
         PngLogger.info("currentLine: " + currentHeight + "/" + imageInfo.height);
     }
 
     void getNextUnfilteredLine() throws IOException {
+        previousUnfilteredLine = currentUnfilteredLine;
+
         //load the filtered scanline into currentLine
         loadNextScanline();
 
@@ -187,7 +189,9 @@ public class PngLoader {
             currentUnfilteredLine[i] = reconstructByte(currentLine[0], a, b, c, currentLine[i+1]);
         }
 
-        previousUnfilteredLine = currentUnfilteredLine;
+        if(previousUnfilteredLine != null){
+            currentHeight++;
+        }
     }
 
     UnsignedByte reconstructByte(UnsignedByte filterTypeByte, UnsignedByte a, UnsignedByte b, UnsignedByte c, UnsignedByte x){
@@ -238,5 +242,71 @@ public class PngLoader {
         }
 
         return formattedHex.toString();
+    }
+
+    public ImageTile getTile(int tileHeight) throws IOException {
+        int[][][] pixelValues = new int[imageInfo.width][tileHeight][imageInfo.numChannels];
+        int ulx = 0;
+        int uly = currentHeight;
+        int lrx = imageInfo.width-1;
+        int lry = uly + tileHeight;
+
+        for(int y = currentHeight;y<tileHeight;y++){
+            getNextUnfilteredLine();
+            int byteIndex = 0;
+
+            //extract the pixel values from the byte array
+            int x = 0;
+            switch(imageInfo.bitDepth){
+                case 1:
+                    //image can only be grayscale without alpha
+                    x = 0;
+                    while(x<imageInfo.width){
+                        int currentByte = currentUnfilteredLine[x/8].value;
+                        pixelValues[x][y][0] = (currentByte >>> (7-x%8)) & 0b1;
+                        x++;
+                    }
+                    break;
+                case 2:
+                    x = 0;
+                    while(x<imageInfo.width){
+                        int currentByte = currentUnfilteredLine[x/4].value;
+                        pixelValues[x][y][0] = (currentByte >>> ((3-x%4)*2)) & 0b11;
+                        x++;
+                    }
+                    break;
+                case 4:
+                    x = 0;
+                    while(x< imageInfo.width){
+                        int currentByte = currentUnfilteredLine[x/2].value;
+                        pixelValues[x][y][0] = (currentByte >>> ((1-x%2)*4)) & 0b1111;
+                        x++;
+                    }
+                    break;
+                case 8:
+
+
+            }
+
+            for(int x = 0;x<imageInfo.width;x++){
+                switch(imageInfo.bitDepth){
+                    case 1: {
+                        //image can only be grayscale without alpha
+                        for(int i = 0;i<)
+                    }
+                    case 8: {
+                        for(int i = 0;i< imageInfo.numChannels;i++){
+                            pixelValues[x][y][i] = currentUnfilteredLine[byteIndex].value;
+                            byteIndex++;
+                        }
+                        break;
+                    }
+                    default:
+                        throw new RuntimeException("Not implemented yet");
+                }
+            }
+        }
+
+        return new ImageTile(ulx, uly, imageInfo.width, tileHeight, imageInfo, pixelValues);
     }
 }
