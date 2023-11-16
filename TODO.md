@@ -9,6 +9,8 @@
 - [ ] Rewrite main function
 - [ ] Implement padding for image tiles
 - [ ] Implement image tiles that are not whole lines
+- [ ] Change image tile to store in int
+- [ ] Clamp down 16 bit color OR implement support
 
 |                           | Colour type | Allowed bit depths     |
 |---------------------------|-------------|------------------------|
