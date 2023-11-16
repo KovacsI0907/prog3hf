@@ -1,4 +1,5 @@
 import PngLoader.PngLoader;
+import PngLoader.ImageTile;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -17,9 +18,10 @@ public class Main {
 
         // Load the image
         try {
-            File imageFile = new File("test4.png"); // Replace with the path to your image
+            File imageFile = new File("test4bw.png"); // Replace with the path to your image
             PngLoader loader = new PngLoader(imageFile);
-            Image image = loader.getImage();
+            ImageTile tile = loader.getTile(150);
+            Image image = tile.getAsImage();
             label.setIcon(new ImageIcon(image));
         } catch (IOException e) {
             e.printStackTrace();
