@@ -4,7 +4,7 @@ import java.util.logging.Logger;
 
 public final class PngLogger {
     static final private boolean showDebug = true;
-    static final private boolean showInfo = false;
+    static final private boolean showInfo = true;
 
     public static void info(String msg){
         if(showInfo)

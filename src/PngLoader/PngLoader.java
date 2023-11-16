@@ -124,6 +124,8 @@ public class PngLoader {
             bytesToLoad = (int) Math.ceil((double) imageInfo.width / pixelsPerByte);
         }else{
             int numChannels = switch (imageInfo.colorType) {
+                case 0 ->
+                        1;
                 case 2 -> //truecolor
                         3;
                 case 4 -> //grayscale with alpha
@@ -245,68 +247,138 @@ public class PngLoader {
     }
 
     public ImageTile getTile(int tileHeight) throws IOException {
-        int[][][] pixelValues = new int[imageInfo.width][tileHeight][imageInfo.numChannels];
+        long[][] pixelValues = new long[tileHeight][imageInfo.width];
         int ulx = 0;
         int uly = currentHeight;
-        int lrx = imageInfo.width-1;
-        int lry = uly + tileHeight;
 
         for(int y = currentHeight;y<tileHeight;y++){
             getNextUnfilteredLine();
-            int byteIndex = 0;
 
-            //extract the pixel values from the byte array
-            int x = 0;
-            switch(imageInfo.bitDepth){
-                case 1:
-                    //image can only be grayscale without alpha
-                    x = 0;
-                    while(x<imageInfo.width){
-                        int currentByte = currentUnfilteredLine[x/8].value;
-                        pixelValues[x][y][0] = (currentByte >>> (7-x%8)) & 0b1;
-                        x++;
-                    }
-                    break;
-                case 2:
-                    x = 0;
-                    while(x<imageInfo.width){
-                        int currentByte = currentUnfilteredLine[x/4].value;
-                        pixelValues[x][y][0] = (currentByte >>> ((3-x%4)*2)) & 0b11;
-                        x++;
-                    }
-                    break;
-                case 4:
-                    x = 0;
-                    while(x< imageInfo.width){
-                        int currentByte = currentUnfilteredLine[x/2].value;
-                        pixelValues[x][y][0] = (currentByte >>> ((1-x%2)*4)) & 0b1111;
-                        x++;
-                    }
-                    break;
-                case 8:
-
-
-            }
-
-            for(int x = 0;x<imageInfo.width;x++){
-                switch(imageInfo.bitDepth){
-                    case 1: {
-                        //image can only be grayscale without alpha
-                        for(int i = 0;i<)
-                    }
-                    case 8: {
-                        for(int i = 0;i< imageInfo.numChannels;i++){
-                            pixelValues[x][y][i] = currentUnfilteredLine[byteIndex].value;
-                            byteIndex++;
-                        }
-                        break;
-                    }
-                    default:
-                        throw new RuntimeException("Not implemented yet");
+            if(imageInfo.bitDepth == 8){
+                if(imageInfo.colorType == 6){
+                    pixelValues[y] = decodeTruecolorAlpha8();
+                }else if(imageInfo.colorType == 2){
+                    pixelValues[y] = decodeTruecolor8();
+                }else if(imageInfo.colorType == 0){
+                    pixelValues[y] = decodeGreyscale8();
+                }else if(imageInfo.colorType == 4){
+                    pixelValues[y] = decodeGreyscaleAlpha8();
+                }else{
+                    throw new RuntimeException("Not implemented yet");
                 }
+            }else{
+                pixelValues[y] = decodeGreyscale421();
             }
         }
 
         return new ImageTile(ulx, uly, imageInfo.width, tileHeight, imageInfo, pixelValues);
+    }
+
+    private long[] decodeGreyscale421() {
+        long[] result = new long[imageInfo.width];
+        int currentPixel = 0;
+        for(int i = 0; i<currentUnfilteredLine.length;i++){
+            long currentByte = currentUnfilteredLine[i].value;
+            if(imageInfo.bitDepth == 1){
+                result[currentPixel] = currentByte >>> 7;
+                result[currentPixel + 1] = (currentByte >>> 6) & 0b1;
+                result[currentPixel + 2] = (currentByte >>> 5) & 0b1;
+                result[currentPixel + 3] = (currentByte >>> 4) & 0b1;
+                result[currentPixel + 4] = (currentByte >>> 3) & 0b1;
+                result[currentPixel + 5] = (currentByte >>> 2) & 0b1;
+                result[currentPixel + 6] = (currentByte >>> 1) & 0b1;
+                result[currentPixel + 7] = currentByte & 0b1;
+            }else if(imageInfo.bitDepth == 2){
+                result[currentPixel] = currentByte >>> 6;
+                result[currentPixel + 1] = (currentByte >>> 4) & 0b11;
+                result[currentPixel + 2] = (currentByte >>> 2) & 0b11;
+                result[currentPixel + 3] = currentByte & 0b11;
+            }else{
+                result[currentPixel] = currentByte >>> 4;
+                result[currentPixel + 1] = currentByte & 0b1111;
+            }
+        }
+
+        expandGreyscale(result);
+        return result;
+    }
+
+    private void expandGreyscale(long[] values){
+        for(int i = 0;i<values.length;i++){
+            int max;
+            long value;
+            if(imageInfo.bitDepth == 1){
+                max = 0b1;
+                value = ((values[i] / max) * 255);
+            }else if(imageInfo.bitDepth == 2){
+                max = 0b11;
+                value = (int) ((values[i] / max) * 255);
+            }else{
+                max = 0b1111;
+                value = (int) ((values[i] / max) * 255);
+            }
+            long pixel = 0xFFL << 24 | value << 16 | value << 8 | value;
+            values[i] = pixel;
+        }
+    }
+
+
+    private long[] decodeGreyscale8() {
+        long[] result = new long[imageInfo.width];
+
+        for(int x = 0;x< imageInfo.width;x++){
+            long pixel = 0;
+            pixel = pixel | 0xFFL << 24; //a
+            pixel = pixel | (long)(currentUnfilteredLine[x].value) << 16;   //r
+            pixel = pixel | (long)(currentUnfilteredLine[x].value) << 8;  //g
+            pixel = pixel | (long)(currentUnfilteredLine[x].value);       //b
+
+            result[x] = pixel;
+        }
+
+        return result;
+    }
+
+    private long[] decodeGreyscaleAlpha8() {
+        long[] result = new long[imageInfo.width];
+
+        for(int x = 0;x< imageInfo.width;x++){
+            long pixel = 0;
+            pixel = pixel | (long)(currentUnfilteredLine[2*x+1].value) << 24;   //r
+            pixel = pixel | (long)(currentUnfilteredLine[2*x].value) << 16;   //r
+            pixel = pixel | (long)(currentUnfilteredLine[2*x].value) << 8;  //g
+            pixel = pixel | (long)(currentUnfilteredLine[2*x].value);       //b
+
+            result[x] = pixel;
+        }
+
+        return result;
+    }
+    private long[] decodeTruecolorAlpha8() {
+        long[] result = new long[imageInfo.width];
+        //argb
+        for(int currentByte = 0;currentByte< imageInfo.width*4;currentByte+=4){
+            long pixel = 0;
+            pixel = pixel | (long)(currentUnfilteredLine[currentByte+3].value) << 24; //a
+            pixel = pixel | (long)(currentUnfilteredLine[currentByte].value) << 16;   //r
+            pixel = pixel | (long)(currentUnfilteredLine[currentByte+1].value) << 8;  //g
+            pixel = pixel | (long)(currentUnfilteredLine[currentByte+2].value);       //b
+            result[currentByte/4] = pixel;
+        }
+
+        return result;
+    }
+    private long[] decodeTruecolor8(){
+        long[] result = new long[imageInfo.width];
+        for(int currentByte = 0;currentByte< imageInfo.width*3;currentByte+=3){
+            long pixel = 0;
+            pixel = pixel | 0xFFL << 24; //a
+            pixel = pixel | (long)(currentUnfilteredLine[currentByte].value) << 16;   //r
+            pixel = pixel | (long)(currentUnfilteredLine[currentByte+1].value) << 8;  //g
+            pixel = pixel | (long)(currentUnfilteredLine[currentByte+2].value);       //b
+            result[currentByte/4] = pixel;
+        }
+
+        return result;
     }
 }

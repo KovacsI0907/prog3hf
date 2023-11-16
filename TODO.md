@@ -9,3 +9,11 @@
 - [ ] Rewrite main function
 - [ ] Implement padding for image tiles
 - [ ] Implement image tiles that are not whole lines
+
+|                           | Colour type | Allowed bit depths     |
+|---------------------------|-------------|------------------------|
+| **Greyscale**             | 0           | ~~1, 2, 4,~~ ~~8~~, 16 |
+| **Truecolour**            | 2           | ~~8~~, 16              |
+| ~~**Indexed-colour**~~    | ~~3~~       | ~~1, 2, 4, 8~~         |
+| **Greyscale with alpha**  | 4           | ~~8~~, 16              |
+| **Truecolour with alpha** | 6           | ~~8~~, 16              |

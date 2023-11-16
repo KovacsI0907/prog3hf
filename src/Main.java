@@ -18,7 +18,7 @@ public class Main {
 
         // Load the image
         try {
-            File imageFile = new File("test3.png"); // Replace with the path to your image
+            File imageFile = new File("test4bw.png"); // Replace with the path to your image
             PngLoader loader = new PngLoader(imageFile);
             ImageTile tile = loader.getTile(150);
             Image image = tile.getAsImage();
