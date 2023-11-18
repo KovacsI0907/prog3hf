@@ -1,10 +1,7 @@
 package PngLoader;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.*;
-import java.util.Arrays;
+import java.util.*;
 
 public class PngLoader {
     public final PngInfo imageInfo;
@@ -16,6 +13,8 @@ public class PngLoader {
     UnsignedByte[] currentLine = null;
     UnsignedByte[] currentUnfilteredLine = null;
     UnsignedByte[] previousUnfilteredLine = null;
+
+    List<long[]> paddingBuffer = null;
 
 
 
@@ -246,32 +245,103 @@ public class PngLoader {
         return formattedHex.toString();
     }
 
-    public ImageTile getTile(int tileHeight) throws IOException {
+    public ImageTile getTileWithPadding(int tileHeight, int paddingSize) throws IOException {
+        int rowsNeeded = tileHeight + paddingSize;
+        int uly = currentHeight;
+
+        if(paddingBuffer == null){
+            paddingBuffer = new ArrayList<>();
+            rowsNeeded -= paddingSize;
+            for(int i = 0;i<paddingSize;i++){
+                long[] row = decodeNextRow();
+                paddingBuffer.addFirst(row);
+                paddingBuffer.addLast(row);
+            }
+        }else{
+            //remove unnecessary rows
+            while(paddingBuffer.size() > 2*paddingSize){
+                paddingBuffer.removeFirst();
+            }
+        }
+
+        for(int i = 0;i<rowsNeeded;i++){
+            paddingBuffer.addLast(decodeNextRow());
+        }
+
+        //at this point all rows needed are in the buffer
+
+        //apply mirroring to the sides
+        for(int i = 0;i<paddingBuffer.size();i++){
+            //skip rows that have already been mirrored
+            if (paddingBuffer.get(i).length != imageInfo.width){
+                continue;
+            }
+
+            long[] paddedRow = mirrorPadRow(paddingBuffer.get(i), paddingSize);
+            paddingBuffer.set(i, paddedRow);
+        }
+
+        long[][] result = new long[tileHeight + 2*paddingSize][];
+        for(int i = 0;i< paddingBuffer.size();i++){
+            result[i] = paddingBuffer.get(i);
+        }
+
+        return new ImageTile(0, uly, imageInfo.width, tileHeight, paddingSize, imageInfo, result);
+    }
+
+    private long[] mirrorPadRow(long[] row, int paddingSize) {
+        long[] padded = new long[row.length + 2*paddingSize];
+
+        //apply left pad
+        for(int i = 0;i<paddingSize;i++){
+            padded[i] = row[paddingSize-i];
+        }
+
+        //TODO fix this copy, it's terrible for performance
+        //copy middle
+        System.arraycopy(row, 0, padded, paddingSize, row.length);
+
+        //apply right pad
+        int helper = row.length+paddingSize-1;
+        for(int i = 0;i<paddingSize;i++){
+            padded[row.length + paddingSize + i] = padded[helper];
+            helper--;
+        }
+
+        return padded;
+    }
+
+    private long[] decodeNextRow() throws IOException {
+        getNextUnfilteredLine();
+        long[] row;
+        if(imageInfo.bitDepth < 8){
+            row = decodeGreyscale421();
+        }else if (imageInfo.bitDepth == 8){
+            row = switch (imageInfo.colorType){
+                case 0 -> decodeGreyscale8();
+                case 2 -> decodeTruecolor8();
+                case 4 -> decodeGreyscaleAlpha8();
+                case 6 -> decodeTruecolorAlpha8();
+                default -> throw new IllegalStateException("Unexpected value: " + imageInfo.colorType);
+            };
+        }else{
+            throw new RuntimeException("Not implemented yet");
+        }
+
+        return row;
+    }
+
+    public ImageTile getTileWithoutPadding(int tileHeight) throws IOException {
+
         long[][] pixelValues = new long[tileHeight][imageInfo.width];
         int ulx = 0;
         int uly = currentHeight;
 
-        for(int y = currentHeight;y<tileHeight;y++){
-            getNextUnfilteredLine();
-
-            if(imageInfo.bitDepth == 8){
-                if(imageInfo.colorType == 6){
-                    pixelValues[y] = decodeTruecolorAlpha8();
-                }else if(imageInfo.colorType == 2){
-                    pixelValues[y] = decodeTruecolor8();
-                }else if(imageInfo.colorType == 0){
-                    pixelValues[y] = decodeGreyscale8();
-                }else if(imageInfo.colorType == 4){
-                    pixelValues[y] = decodeGreyscaleAlpha8();
-                }else{
-                    throw new RuntimeException("Not implemented yet");
-                }
-            }else{
-                pixelValues[y] = decodeGreyscale421();
-            }
+        for(int y = 0;y<tileHeight;y++){
+            pixelValues[y] = decodeNextRow();
         }
 
-        return new ImageTile(ulx, uly, imageInfo.width, tileHeight, imageInfo, pixelValues);
+        return new ImageTile(ulx, uly, imageInfo.width, tileHeight, 0, imageInfo, pixelValues);
     }
 
     private long[] decodeGreyscale421() {

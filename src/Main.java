@@ -1,3 +1,4 @@
+import Algorithms.MedianFilter;
 import PngLoader.PngLoader;
 import PngLoader.ImageTile;
 import javax.swing.*;
@@ -18,10 +19,12 @@ public class Main {
 
         // Load the image
         try {
-            File imageFile = new File("test.png"); // Replace with the path to your image
+            File imageFile = new File("salt_and_pepper.png"); // Replace with the path to your image
             PngLoader loader = new PngLoader(imageFile);
-            ImageTile tile = loader.getTile(150);
-            Image image = tile.getAsImage();
+            ImageTile originalTile = loader.getTileWithPadding(400, 4);
+            MedianFilter mf1 = new MedianFilter(originalTile, MedianFilter.KERNEL_SIZE.THREExTHREE);
+            mf1.run();
+            Image image = mf1.getOutput().getAsImage();
             label.setIcon(new ImageIcon(image));
         } catch (IOException e) {
             e.printStackTrace();

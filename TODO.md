@@ -11,6 +11,7 @@
 - [ ] Implement image tiles that are not whole lines
 - [ ] Change image tile to store in int
 - [ ] Clamp down 16 bit color OR implement support
+- [ ] Lower tile and padding fix
 
 |                           | Colour type | Allowed bit depths     |
 |---------------------------|-------------|------------------------|
