@@ -7,11 +7,10 @@
     - [ ] other
 - [ ] clean up PngLoader.java
 - [ ] Rewrite main function
-- [ ] Implement padding for image tiles
-- [ ] Implement image tiles that are not whole lines
+- [x] Implement padding for image tiles
 - [ ] Change image tile to store in int
 - [ ] Clamp down 16 bit color OR implement support
-- [ ] Lower tile and padding fix
+- [x] Lower tile and padding fix
 
 |                           | Colour type | Allowed bit depths     |
 |---------------------------|-------------|------------------------|
