@@ -725,7 +725,7 @@
 </Property>
 <Class id="cd9ecc29-863c-11ee-94bd-eda727700f53">
 <name>
-<val>ProcessingAlgorithm</val>
+<val>TileProcessingAlgorithm</val>
 </name>
 <package>
 <ref refid="58d6c2e8-66f8-11ec-b4c8-0456e5e540ed"/>
@@ -744,13 +744,13 @@
 </Class>
 <ClassItem id="d759d392-863c-11ee-8574-eda727700f53">
 <matrix>
-<val>(1.0, 0.0, 0.0, 1.0, 435.04290771484375, 39.51566314697243)</val>
+<val>(1.0, 0.0, 0.0, 1.0, 423.54290771484375, 39.51566314697243)</val>
 </matrix>
 <top-left>
 <val>(0.0, 0.0)</val>
 </top-left>
 <width>
-<val>146.0</val>
+<val>171.0</val>
 </width>
 <height>
 <val>57.0</val>
@@ -888,7 +888,7 @@
 <val>(1.0, 0.0, 0.0, 1.0, 822.0311889648438, 197.87486774050615)</val>
 </matrix>
 <points>
-<val>[(-239.460693359375, -253.6873601111116), (-258.98828125, -158.35920459353372)]</val>
+<val>[(-239.460693359375, -253.6873601111116), (-248.57047303082186, -158.35920459353372)]</val>
 </points>
 <head-connection>
 <ref refid="1a070aec-863d-11ee-896c-eda727700f53"/>
@@ -927,7 +927,7 @@
 <val>(1.0, 0.0, 0.0, 1.0, 823.7147827148438, 185.5350621374788)</val>
 </matrix>
 <points>
-<val>[(-387.144287109375, -241.34755450808424), (-370.671875, -146.01939899050637)]</val>
+<val>[(-387.144287109375, -241.34755450808424), (-379.0896832191781, -146.01939899050637)]</val>
 </points>
 <head-connection>
 <ref refid="0be00181-863d-11ee-bb97-eda727700f53"/>
@@ -1180,7 +1180,7 @@
 <val>(1.0, 0.0, 0.0, 1.0, 510.152099609375, 281.929585758084)</val>
 </matrix>
 <points>
-<val>[(-2.10919189453125, 3.6172892419158984), (-2.10919189453125, -185.41392261111156)]</val>
+<val>[(-2.10919189453125, 3.6172892419158984), (-1.10919189453125, -185.41392261111156)]</val>
 </points>
 <head-connection>
 <ref refid="fa2dff44-863c-11ee-88c0-eda727700f53"/>
@@ -1736,7 +1736,7 @@
 </Property>
 <Comment id="849a3345-8642-11ee-b497-cbe85c83adb1">
 <body>
-<val>MultithreadedImageProcessing</val>
+<val>ParallelImageProcessing</val>
 </body>
 <presentation>
 <reflist>

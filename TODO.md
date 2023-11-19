@@ -5,7 +5,7 @@
 - [ ] other color type and bit depth support
     - [x] variable bitPerPixel in filtering
     - [ ] other
-- [ ] clean up PngLoader.java
+- [ ] clean up PngInput.java
 - [ ] Rewrite main function
 - [x] Implement padding for image tiles
 - [ ] Change image tile to store in int
