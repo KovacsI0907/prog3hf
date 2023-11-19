@@ -19,13 +19,12 @@ public class Main {
         // Load the image
         try {
             File imageFile = new File("salt_and_pepper.png"); // Replace with the path to your image
-            TilingContext tilingContext = new TilingContext(200, 0, new PngLoader(imageFile));
+            TilingContext tilingContext = new TilingContext(200, 1, new PngLoader(imageFile));
             ImageTile originalTile = tilingContext.getNextTile();
             originalTile = tilingContext.getNextTile();
-            originalTile = tilingContext.getNextTile();
-            //MedianFilter mf1 = new MedianFilter(originalTile, MedianFilter.KERNEL_SIZE.THREExTHREE);
-            //mf1.run();
-            Image image = originalTile.getAsImage(); //mf1.getOutput().getAsImage();
+            ProcessingTask pt = new ProcessingTask(originalTile, new MedianFilter(originalTile, MedianFilter.KERNEL_SIZE.THREE));
+            pt.run();
+            Image image = pt.algorithm.getOutput().getAsImage();
             label.setIcon(new ImageIcon(image));
         } catch (IOException e) {
             e.printStackTrace();
