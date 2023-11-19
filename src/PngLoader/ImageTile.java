@@ -3,14 +3,8 @@ package PngLoader;
 import java.awt.image.BufferedImage;
 
 public class ImageTile {
-    public final PngInfo imageInfo;
-
-    //not including padding
-    public final int upperLeftX;
-    public final int upperLeftY;
-    public final int width;
     public final int height;
-
+    public final int width;
     public final int paddingSize;
 
     //TODO optimize for smaller channel sizes
@@ -20,18 +14,15 @@ public class ImageTile {
     // (it's a 2d array of pixel channels)
     long[][] pixelValues;
 
-    public ImageTile(int upperLeftX, int upperLeftY, int width, int height, int paddingSize, PngInfo imageInfo, long[][] pixelValues) {
+    public ImageTile(int width, int height, int paddingSize, long[][] pixelValues) {
         if(pixelValues.length != height + 2*paddingSize ||
                 pixelValues[0].length != width + 2*paddingSize
         ){
             throw new RuntimeException("Invalid tile size or pixelValues array");
         }
 
-        this.imageInfo = imageInfo;
         this.pixelValues = pixelValues;
-        this.upperLeftX = upperLeftX;
         this.width = width;
-        this.upperLeftY = upperLeftY;
         this.height = height;
         this.paddingSize = paddingSize;
     }
@@ -39,18 +30,10 @@ public class ImageTile {
     public BufferedImage getAsImage(){
         BufferedImage image = new BufferedImage(this.width, this.height, BufferedImage.TYPE_INT_ARGB);
 
-        if(imageInfo.bitDepth == 8){
-            if(imageInfo.colorType == 6 || imageInfo.colorType == 2 || imageInfo.colorType == 0 || imageInfo.colorType == 4){
-                for(int y = 0;y<height;y++) {
-                    for(int x = 0;x<width;x++){
-                        image.setRGB(x,y, (int)pixelValues[y+paddingSize][x+paddingSize]);
-                    }
-                }
-            }else{
-                throw new RuntimeException("Not implemented yet");
+        for(int y = 0;y<height;y++) {
+            for(int x = 0;x<width;x++){
+                image.setRGB(x,y, (int)pixelValues[y+paddingSize][x+paddingSize]);
             }
-        }else{
-            throw new RuntimeException("Not implemented yet");
         }
 
         return image;
@@ -59,18 +42,10 @@ public class ImageTile {
     public BufferedImage getAsImageWithPadding(){
         BufferedImage image = new BufferedImage(this.width + 2*paddingSize, this.height + 2*paddingSize, BufferedImage.TYPE_INT_ARGB);
 
-        if(imageInfo.bitDepth == 8){
-            if(imageInfo.colorType == 6 || imageInfo.colorType == 2 || imageInfo.colorType == 0 || imageInfo.colorType == 4){
-                for(int y = 0;y<height + 2*paddingSize;y++) {
-                    for(int x = 0;x<width + 2*paddingSize;x++){
-                        image.setRGB(x,y, (int)pixelValues[y][x]);
-                    }
-                }
-            }else{
-                throw new RuntimeException("Not implemented yet");
+        for(int y = 0;y<height + 2*paddingSize;y++) {
+            for(int x = 0;x<width + 2*paddingSize;x++){
+                image.setRGB(x,y, (int)pixelValues[y][x]);
             }
-        }else{
-            throw new RuntimeException("Not implemented yet");
         }
 
         return image;
@@ -91,14 +66,6 @@ public class ImageTile {
     public int getAlpha(int x, int y) {
         return (int) (pixelValues[y][x] >>> 24 | 0xFF);
     }
-
-    public int getLuminance(int x, int y) {
-        if (imageInfo.colorType == 0 || imageInfo.colorType == 4) {
-            throw new RuntimeException("Image is not grayscale");
-        }
-        return (int) (pixelValues[y][x] | 0xFF);
-    }
-
 
     public void setRed(int x, int y, int value) {
         pixelValues[y][x] = (pixelValues[y][x] & 0xFF00FFFFL) | ((value & 0xFFL) << 16);

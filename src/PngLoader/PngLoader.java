@@ -244,74 +244,7 @@ public class PngLoader {
 
         return formattedHex.toString();
     }
-
-    public ImageTile getTileWithPadding(int tileHeight, int paddingSize) throws IOException {
-        int rowsNeeded = tileHeight + paddingSize;
-        int uly = currentHeight;
-
-        if(paddingBuffer == null){
-            paddingBuffer = new ArrayList<>();
-            rowsNeeded -= paddingSize;
-            for(int i = 0;i<paddingSize;i++){
-                long[] row = decodeNextRow();
-                paddingBuffer.addFirst(row);
-                paddingBuffer.addLast(row);
-            }
-        }else{
-            //remove unnecessary rows
-            while(paddingBuffer.size() > 2*paddingSize){
-                paddingBuffer.removeFirst();
-            }
-        }
-
-        for(int i = 0;i<rowsNeeded;i++){
-            paddingBuffer.addLast(decodeNextRow());
-        }
-
-        //at this point all rows needed are in the buffer
-
-        //apply mirroring to the sides
-        for(int i = 0;i<paddingBuffer.size();i++){
-            //skip rows that have already been mirrored
-            if (paddingBuffer.get(i).length != imageInfo.width){
-                continue;
-            }
-
-            long[] paddedRow = mirrorPadRow(paddingBuffer.get(i), paddingSize);
-            paddingBuffer.set(i, paddedRow);
-        }
-
-        long[][] result = new long[tileHeight + 2*paddingSize][];
-        for(int i = 0;i< paddingBuffer.size();i++){
-            result[i] = paddingBuffer.get(i);
-        }
-
-        return new ImageTile(0, uly, imageInfo.width, tileHeight, paddingSize, imageInfo, result);
-    }
-
-    private long[] mirrorPadRow(long[] row, int paddingSize) {
-        long[] padded = new long[row.length + 2*paddingSize];
-
-        //apply left pad
-        for(int i = 0;i<paddingSize;i++){
-            padded[i] = row[paddingSize-i];
-        }
-
-        //TODO fix this copy, it's terrible for performance
-        //copy middle
-        System.arraycopy(row, 0, padded, paddingSize, row.length);
-
-        //apply right pad
-        int helper = row.length+paddingSize-1;
-        for(int i = 0;i<paddingSize;i++){
-            padded[row.length + paddingSize + i] = padded[helper];
-            helper--;
-        }
-
-        return padded;
-    }
-
-    private long[] decodeNextRow() throws IOException {
+    public long[] decodeNextRow() throws IOException {
         getNextUnfilteredLine();
         long[] row;
         if(imageInfo.bitDepth < 8){
@@ -329,19 +262,6 @@ public class PngLoader {
         }
 
         return row;
-    }
-
-    public ImageTile getTileWithoutPadding(int tileHeight) throws IOException {
-
-        long[][] pixelValues = new long[tileHeight][imageInfo.width];
-        int ulx = 0;
-        int uly = currentHeight;
-
-        for(int y = 0;y<tileHeight;y++){
-            pixelValues[y] = decodeNextRow();
-        }
-
-        return new ImageTile(ulx, uly, imageInfo.width, tileHeight, 0, imageInfo, pixelValues);
     }
 
     private long[] decodeGreyscale421() {

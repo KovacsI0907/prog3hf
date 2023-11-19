@@ -43,12 +43,10 @@ public class MedianFilter extends AlgoRunner{
             }
         }
 
-        output = new ImageTile(imageTile.upperLeftX,
-                imageTile.upperLeftY,
+        output = new ImageTile(
                 imageTile.width,
                 imageTile.height,
                 0,
-                imageTile.imageInfo,
                 outputData);
     }
 
