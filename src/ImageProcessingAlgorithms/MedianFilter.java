@@ -1,6 +1,6 @@
-package Algorithms;
+package ImageProcessingAlgorithms;
 
-import PngLoader.ImageTile;
+import ParallelImageProcessing.ImageTile;
 
 import java.util.ArrayList;
 import java.util.Collections;

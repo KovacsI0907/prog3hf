@@ -1,4 +1,6 @@
-package PngLoader;
+package ParallelImageProcessing;
+
+import PngInput.PngLoader;
 
 import java.io.IOException;
 import java.util.ArrayList;

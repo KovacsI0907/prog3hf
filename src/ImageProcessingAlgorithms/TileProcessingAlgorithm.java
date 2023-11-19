@@ -1,6 +1,6 @@
-package Algorithms;
+package ImageProcessingAlgorithms;
 
-import PngLoader.ImageTile;
+import ParallelImageProcessing.ImageTile;
 
 public abstract class TileProcessingAlgorithm {
     public final ImageTile input;

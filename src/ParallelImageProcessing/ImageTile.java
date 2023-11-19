@@ -1,4 +1,4 @@
-package PngLoader;
+package ParallelImageProcessing;
 
 import java.awt.image.BufferedImage;
 

@@ -1,4 +1,4 @@
-package PngLoader;
+package PngInput;
 
 import java.io.*;
 import java.util.*;

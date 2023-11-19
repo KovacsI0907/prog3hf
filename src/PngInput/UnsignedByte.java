@@ -1,4 +1,4 @@
-package PngLoader;
+package PngInput;
 
 
 public class UnsignedByte {

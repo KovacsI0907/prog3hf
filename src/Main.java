@@ -1,5 +1,8 @@
-import Algorithms.MedianFilter;
-import PngLoader.*;
+import ImageProcessingAlgorithms.MedianFilter;
+import ParallelImageProcessing.ImageTile;
+import ParallelImageProcessing.ProcessingTask;
+import ParallelImageProcessing.TilingContext;
+import PngInput.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;

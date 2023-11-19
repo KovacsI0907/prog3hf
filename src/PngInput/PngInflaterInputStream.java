@@ -1,4 +1,4 @@
-package PngLoader;
+package PngInput;
 
 import java.io.EOFException;
 import java.io.IOException;

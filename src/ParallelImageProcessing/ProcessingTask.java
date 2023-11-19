@@ -1,6 +1,6 @@
-package PngLoader;
+package ParallelImageProcessing;
 
-import Algorithms.TileProcessingAlgorithm;
+import ImageProcessingAlgorithms.TileProcessingAlgorithm;
 
 public class ProcessingTask implements Runnable {
     public final ImageTile tile;

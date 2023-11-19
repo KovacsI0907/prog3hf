@@ -1,6 +1,4 @@
-package PngLoader;
-
-import java.util.logging.Logger;
+package PngInput;
 
 public final class PngLogger {
     static final private boolean showDebug = true;
