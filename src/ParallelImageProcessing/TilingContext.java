@@ -38,6 +38,9 @@ public class TilingContext {
         return tile;
     }
 
+    public boolean hasNextTile() {
+        return currentTileIndex != numTiles;
+    }
     private long[] mirrorPadRow(long[] row) {
         long[] padded = new long[row.length + 2*paddingSize];
 

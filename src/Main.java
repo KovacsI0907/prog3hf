@@ -1,12 +1,12 @@
 import ImageProcessingAlgorithms.MedianFilter;
-import ParallelImageProcessing.ImageTile;
-import ParallelImageProcessing.ProcessingTask;
-import ParallelImageProcessing.TilingContext;
+import ParallelImageProcessing.*;
 import PngInput.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 public class Main {
     public static void main(String[] args) {
@@ -21,16 +21,24 @@ public class Main {
 
         // Load the image
         try {
-            File imageFile = new File("salt_and_pepper.png"); // Replace with the path to your image
+            Queue<ImageProcessingContext> images = new ArrayDeque<>();
+            images.add(new ImageProcessingContext(new File("salt_and_pepper.png")));
+            images.add(new ImageProcessingContext(new File("test.png")));
+            images.add(new ImageProcessingContext(new File("test2.png")));
+            ImageProcessingScheduler scheduler = new ImageProcessingScheduler(images);
+            scheduler.start();
+            /*
             TilingContext tilingContext = new TilingContext(200, 1, new PngLoader(imageFile));
             ImageTile originalTile = tilingContext.getNextTile();
             originalTile = tilingContext.getNextTile();
             ProcessingTask pt = new ProcessingTask(originalTile, new MedianFilter(originalTile, MedianFilter.KERNEL_SIZE.THREE));
             pt.run();
             Image image = pt.algorithm.getOutput().getAsImage();
-            label.setIcon(new ImageIcon(image));
+            label.setIcon(new ImageIcon(image)); */
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         // Add the label to the frame

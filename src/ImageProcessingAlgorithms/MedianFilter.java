@@ -17,38 +17,40 @@ public class MedianFilter extends TileProcessingAlgorithm{
 
     int kernelSize;
 
-    public MedianFilter(ImageTile input, KERNEL_SIZE kernelSize){
-        super(input);
-
+    public MedianFilter(KERNEL_SIZE kernelSize){
         this.kernelSize = switch(kernelSize){
             case THREE -> 3;
             case FIVE -> 5;
             case SEVEN -> 7;
             case NINE -> 9;
         };
-
-        if(input.paddingSize < this.kernelSize / 2)
-            throw new RuntimeException("Padding too small for this algorithm");
     }
 
     @Override
-    public void produceOutput() {
-        long[][] outputData = new long[input.height][input.width];
+    public ImageTile produceOutput(ImageTile tile) {
+        long[][] outputData = new long[tile.height][tile.width];
 
-        for(int y = 0;y<input.height;y++){
-            for(int x = 0;x<input.width;x++){
-                outputData[y][x] = getMedianPixel(x,y);
+        for(int y = 0;y<tile.height;y++){
+            for(int x = 0;x<tile.width;x++){
+                outputData[y][x] = getMedianPixel(x,y, tile);
             }
         }
 
-        output = new ImageTile(input.width, input.height, 0, outputData);
+        //TODO remove
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new ImageTile(tile.width, tile.height, 0, outputData);
     }
 
-    private long getMedianPixel(int x, int y) {
+    private long getMedianPixel(int x, int y, ImageTile tile) {
         List<Long> pixels = new ArrayList<>();
         for(int i = y-kernelSize/2;i <= y+kernelSize/2;i++){
             for(int j = x-kernelSize/2;j <= x+kernelSize/2;j++){
-                pixels.add(input.getPixelRelativeOriginal(j,i));
+                pixels.add(tile.getPixelRelativeOriginal(j,i));
             }
         }
         Collections.sort(pixels);
