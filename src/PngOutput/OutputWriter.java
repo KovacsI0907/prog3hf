@@ -1,39 +1,64 @@
 package PngOutput;
 
+import ParallelImageProcessing.ImageProcessingContext;
+import ParallelImageProcessing.ImageProcessingScheduler;
 import ParallelImageProcessing.ImageTile;
 
-import java.util.Queue;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 public class OutputWriter implements Runnable{
-    Queue<ImageTile> imageTiles;
+    BlockingQueue<ImageTile> imageTiles;
+    public final HashMap<ImageProcessingContext, ImageTiledWriter> imageWriters;
     boolean endOfStream;
     public final int WAIT_MILLIS = 1000;
 
-    public OutputWriter(Queue<ImageTile> imageTiles){
+    public OutputWriter(BlockingQueue<ImageTile> imageTiles){
         this.imageTiles = imageTiles;
         endOfStream = false;
+        imageWriters = new HashMap<>();
     }
     @Override
     public void run() {
-        while(!(endOfStream && imageTiles.isEmpty())){
-            if(imageTiles.isEmpty()){
-                try{
-                    Thread.sleep(WAIT_MILLIS);
-                } catch (InterruptedException e) {
-                    if(imageTiles.isEmpty()){
-                        if(!endOfStream) {
-                            throw new RuntimeException("Something terrible has happened");
-                        }
+        while(true){
+            while(!imageTiles.isEmpty()){
+                ImageTile tile = imageTiles.poll();
+                if(imageWriters.containsKey(tile.image)){
+                    imageWriters.get(tile.image).tilesReady.add(tile);
+                }else{
+                    try {
+                        imageWriters.put(tile.image, new ImageTiledWriter(tile.image));
+                        imageWriters.get(tile.image).tilesReady.add(tile);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
                 }
-            }else{
-                writeTile(imageTiles.poll());
+            }
+
+
+            List<ImageProcessingContext> toRemove = new ArrayList<>();
+            for(ImageProcessingContext ipc : imageWriters.keySet()){
+                ImageTiledWriter writer = imageWriters.get(ipc);
+                try {
+                    writer.tryWriteNextTile();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                if(writer.isFinished()){
+                    try {
+                        writer.close();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    toRemove.add(ipc);
+                }
+            }
+
+            for(ImageProcessingContext ipc : toRemove){
+                imageWriters.remove(ipc);
             }
         }
-    }
-
-    private void writeTile(ImageTile tile){
-        System.out.println("Written tile: " + tile.toString());
     }
 
     public void setEndOfStream(){

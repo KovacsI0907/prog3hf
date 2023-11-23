@@ -11,6 +11,7 @@
 - [ ] Change image tile to store in int
 - [ ] Clamp down 16 bit color OR implement support
 - [x] Lower tile and padding fix
+- [ ] Better exception handling in run() functions
 
 |                           | Colour type | Allowed bit depths     |
 |---------------------------|-------------|------------------------|

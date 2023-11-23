@@ -20,9 +20,5 @@ public class ProcessingTask implements Runnable {
     @Override
     public void run() {
         processedTiles.add(algorithm.produceOutput(tile));
-
-        if(outputWriterThread.getState() == Thread.State.WAITING || outputWriterThread.getState() == Thread.State.TIMED_WAITING){
-            outputWriterThread.interrupt();
-        }
     }
 }

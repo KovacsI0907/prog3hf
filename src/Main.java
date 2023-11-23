@@ -22,9 +22,9 @@ public class Main {
         // Load the image
         try {
             Queue<ImageProcessingContext> images = new ArrayDeque<>();
-            images.add(new ImageProcessingContext(new File("salt_and_pepper.png")));
-            images.add(new ImageProcessingContext(new File("test.png")));
-            images.add(new ImageProcessingContext(new File("test2.png")));
+            images.add(new ImageProcessingContext(new File("test_output_output.png")));
+            //images.add(new ImageProcessingContext(new File("test.png")));
+            //images.add(new ImageProcessingContext(new File("test2.png")));
             ImageProcessingScheduler scheduler = new ImageProcessingScheduler(images);
             scheduler.start();
             /*

@@ -36,14 +36,7 @@ public class MedianFilter extends TileProcessingAlgorithm{
             }
         }
 
-        //TODO remove
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        return new ImageTile(tile.width, tile.height, 0, outputData);
+        return new ImageTile(tile.width, tile.height, 0, tile.image, tile.tileIndex, outputData);
     }
 
     private long getMedianPixel(int x, int y, ImageTile tile) {

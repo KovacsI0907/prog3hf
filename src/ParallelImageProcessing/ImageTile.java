@@ -7,14 +7,19 @@ public class ImageTile {
     public final int width;
     public final int paddingSize;
 
+    public final ImageProcessingContext image;
+    public final int tileIndex;
+
     //TODO optimize for smaller channel sizes
     //we use int because it fits a 16 bit unsigned value
     //first 2 dimensions for X and Y
     //third dimension for storing all channels
     // (it's a 2d array of pixel channels)
-    long[][] pixelValues;
+    private long[][] pixelValues;
 
-    public ImageTile(int width, int height, int paddingSize, long[][] pixelValues) {
+    public ImageTile(int width, int height, int paddingSize, ImageProcessingContext image, int tileIndex, long[][] pixelValues) {
+        this.image = image;
+        this.tileIndex = tileIndex;
         if(pixelValues.length != height + 2*paddingSize ||
                 pixelValues[0].length != width + 2*paddingSize
         ){
@@ -92,5 +97,13 @@ public class ImageTile {
 
     public long getPixelIncludePadding(int x, int y){
         return pixelValues[y][x];
+    }
+
+    public long[] getRow(int y) {
+        return pixelValues[y];
+    }
+
+    public int getTileIndex(){
+        return tileIndex;
     }
 }

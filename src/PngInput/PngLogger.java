@@ -2,7 +2,7 @@ package PngInput;
 
 public final class PngLogger {
     static final private boolean showDebug = false;
-    static final private boolean showInfo = false;
+    static final private boolean showInfo = true;
 
     public static void info(String msg){
         if(showInfo)

@@ -8,7 +8,7 @@ public class PngLoader {
 
     //index of the current unfiltered scanline
     private int currentHeight;
-
+    int debugInt = 0;
     PngInflaterInputStream pngInflaterInputStream;
     UnsignedByte[] currentLine = null;
     UnsignedByte[] currentUnfilteredLine = null;
@@ -146,8 +146,12 @@ public class PngLoader {
         if(currentLine == null){
             currentLine = new UnsignedByte[getLineLengthInBytes() + 1]; // +1 for filter type byte
         }
+        if(currentHeight == 98){
+            System.out.println();
+        }
         Helper.readExactlyNUBytes(pngInflaterInputStream, currentLine.length, currentLine, 0);
-        PngLogger.info("currentLine: " + currentHeight + "/" + imageInfo.height);
+        debugInt++;
+        PngLogger.info(debugInt + " scanlines loaded");
     }
 
     void getNextUnfilteredLine() throws IOException {

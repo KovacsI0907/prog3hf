@@ -14,9 +14,11 @@ public class TilingContext {
     int currentTileIndex;
 
     public final PngLoader imageLoader;
+    public final ImageProcessingContext image;
     List<long[]> paddingBuffer = new ArrayList<>();
 
-    public TilingContext(int tileHeight, int paddingSize, PngLoader imageLoader) {
+    public TilingContext(int tileHeight, int paddingSize, PngLoader imageLoader, ImageProcessingContext image) {
+        this.image = image;
         this.numTiles = (int) Math.ceil((double) imageLoader.imageInfo.height / tileHeight);
         this.tileHeight = tileHeight;
 
@@ -31,7 +33,7 @@ public class TilingContext {
         if(paddingSize == 0){
             tile = getTileWithoutPadding();
         }else{
-            tile = getImageTileWithPadding();
+            tile = getTileWithPadding();
         }
         currentTileIndex++;
 
@@ -74,10 +76,10 @@ public class TilingContext {
             pixelValues[y] = imageLoader.decodeNextRow();
         }
 
-        return new ImageTile(imageLoader.imageInfo.width, rowsToLoad, 0, pixelValues);
+        return new ImageTile(imageLoader.imageInfo.width, rowsToLoad, 0, image, currentTileIndex, pixelValues);
     }
 
-    public ImageTile getImageTileWithPadding() throws IOException {
+    public ImageTile getTileWithPadding() throws IOException {
         if(currentTileIndex == 0){
             return getFirstPaddedTile();
         }
@@ -100,7 +102,7 @@ public class TilingContext {
             paddingBuffer.removeFirst();
         }
 
-        return new ImageTile(imageLoader.imageInfo.width, tileHeight, paddingSize, pixelData);
+        return new ImageTile(imageLoader.imageInfo.width, tileHeight, paddingSize, image, currentTileIndex, pixelData);
     }
 
     private ImageTile getFirstPaddedTile() throws IOException {
@@ -127,7 +129,7 @@ public class TilingContext {
             paddingBuffer.removeFirst();
         }
 
-        return new ImageTile(imageLoader.imageInfo.width, tileHeight, paddingSize, pixelData);
+        return new ImageTile(imageLoader.imageInfo.width, tileHeight, paddingSize, image, currentTileIndex, pixelData);
     }
 
     private ImageTile getLastPaddedTile() throws IOException {
@@ -137,8 +139,10 @@ public class TilingContext {
         for(int i = 0;i<rowsToLoad;i++){
             paddingBuffer.addLast(imageLoader.decodeNextRow());
         }
-        for(int i = paddingBuffer.size()-1; paddingBuffer.size()-i < paddingSize; i--){
-            paddingBuffer.addLast(paddingBuffer.get(i));
+
+        int helper = paddingBuffer.size()-1;
+        for(int i = 0;i<paddingSize;i++){
+            paddingBuffer.addLast(paddingBuffer.get(helper--));
         }
 
         long[][] pixelData = new long[paddingBuffer.size()][];
@@ -148,7 +152,7 @@ public class TilingContext {
         //clean up
         paddingBuffer.clear();
 
-        return new ImageTile(imageLoader.imageInfo.width, pixelData.length - 2*paddingSize, paddingSize, pixelData);
+        return new ImageTile(imageLoader.imageInfo.width, pixelData.length - 2*paddingSize, paddingSize, image, currentTileIndex, pixelData);
     }
 
 }
