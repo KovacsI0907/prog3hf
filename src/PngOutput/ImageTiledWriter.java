@@ -9,7 +9,7 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
 public class ImageTiledWriter {
-    public final ImageProcessingContext image;
+    public final ImageProcessingContext imageProcessingContext;
     File outputFile;
     PriorityQueue<ImageTile> tilesReady;
     FileOutputStream fileOutputStream;
@@ -21,7 +21,7 @@ public class ImageTiledWriter {
     ByteArrayOutputStream byteArrayOutputStream;
 
     public ImageTiledWriter(ImageProcessingContext image) throws IOException {
-        this.image = image;
+        this.imageProcessingContext = image;
 
         String fileNameWithoutExtension = image.imageFile.getName().replaceFirst("[.][^.]+$", "");
         String newFileName = fileNameWithoutExtension + "_output.png";
@@ -39,12 +39,16 @@ public class ImageTiledWriter {
 
     public void init() throws IOException {
         writeSignature();
-        writeIHDR(image.imageWidth, image.imageHeight);
+        writeIHDR(imageProcessingContext.imageWidth, imageProcessingContext.imageHeight);
     }
 
     private void writeSignature() throws IOException {
         byte[] signatureBytes = new byte[]{(byte)0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
         fileOutputStream.write(signatureBytes);
+    }
+
+    public void tryWriteAll() throws IOException {
+        while(tryWriteNextTile());
     }
 
     public boolean tryWriteNextTile() throws IOException {
@@ -56,8 +60,6 @@ public class ImageTiledWriter {
         if(nextTile.tileIndex != lastTileWritten+1) {
             return false;
         }
-
-        System.out.println("tile height: " + nextTile.height);
 
         byte[] data = new byte[nextTile.height * (1+4*nextTile.width)];
         int dataIndex = 0;
@@ -79,6 +81,7 @@ public class ImageTiledWriter {
 
         writeIDAT(data);
         lastTileWritten = nextTile.getTileIndex();
+
         return true;
     }
 
@@ -118,7 +121,19 @@ public class ImageTiledWriter {
 
     /*void writeIDAT(byte[] data) throws IOException {
         byte[] compressedData = compressWithPrefix(data, new byte[]{'I', 'D', 'A', 'T'});
-        fileOutputStream.write(new byte[]{'L', 'E', 'N'});
+        fileOutputStream.write(new byte[]{'L',while(!tilesSharedQueue.isEmpty()){
+                ImageTile tile = tilesSharedQueue.poll();
+                if(imageWriters.containsKey(tile.image)){
+                    imageWriters.get(tile.image).tilesReady.add(tile);
+                }else{
+                    try {
+                        imageWriters.put(tile.image, new ImageTiledWriter(tile.image));
+                        imageWriters.get(tile.image).tilesReady.add(tile);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            } 'E', 'N'});
         writeChunkLength(compressedData.length-4);
         fileOutputStream.write(new byte[]{'B', 'E', 'G'});
         fileOutputStream.write(compressedData);
@@ -198,7 +213,7 @@ public class ImageTiledWriter {
 
         deflaterOutputStream.write(input);
 
-        if(lastTileWritten == image.tilingContext.numTiles-2){
+        if(lastTileWritten == imageProcessingContext.tilingContext.numTiles-2){
             deflaterOutputStream.finish();
             deflaterOutputStream.close();
         }
@@ -219,6 +234,10 @@ public class ImageTiledWriter {
     }
 
     boolean isFinished() {
-        return lastTileWritten == image.tilingContext.numTiles-1;
+        return lastTileWritten == imageProcessingContext.tilingContext.numTiles-1;
+    }
+
+    public int tilesLeft() {
+        return imageProcessingContext.tilingContext.numTiles - (lastTileWritten + 1);
     }
 }

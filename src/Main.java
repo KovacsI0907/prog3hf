@@ -6,7 +6,9 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Queue;
+import java.util.zip.CRC32;
 
 public class Main {
     public static void main(String[] args) {
@@ -21,11 +23,11 @@ public class Main {
 
         // Load the image
         try {
-            Queue<ImageProcessingContext> images = new ArrayDeque<>();
-            images.add(new ImageProcessingContext(new File("test_output_output.png")));
-            //images.add(new ImageProcessingContext(new File("test.png")));
-            //images.add(new ImageProcessingContext(new File("test2.png")));
-            ImageProcessingScheduler scheduler = new ImageProcessingScheduler(images);
+            Deque<ImageProcessingContext> images = new ArrayDeque<>();
+            images.add(new ImageProcessingContext(new File("salt_and_pepper.png")));
+            images.add(new ImageProcessingContext(new File("test.png")));
+            images.add(new ImageProcessingContext(new File("test2.png")));
+            ImageProcessingScheduler scheduler = new ImageProcessingScheduler(images, 5, 10, 60);
             scheduler.start();
             /*
             TilingContext tilingContext = new TilingContext(200, 1, new PngLoader(imageFile));
@@ -37,8 +39,6 @@ public class Main {
             label.setIcon(new ImageIcon(image)); */
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
 
         // Add the label to the frame

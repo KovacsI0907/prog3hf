@@ -5,6 +5,7 @@ import ParallelImageProcessing.ImageTile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 public class MedianFilter extends TileProcessingAlgorithm{
 
@@ -34,6 +35,14 @@ public class MedianFilter extends TileProcessingAlgorithm{
             for(int x = 0;x<tile.width;x++){
                 outputData[y][x] = getMedianPixel(x,y, tile);
             }
+        }
+
+        Random random = new Random();
+
+        try {
+            Thread.sleep(random.nextInt(0,200) + tile.height*tile.width/100);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         return new ImageTile(tile.width, tile.height, 0, tile.image, tile.tileIndex, outputData);
