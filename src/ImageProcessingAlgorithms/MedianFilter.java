@@ -37,14 +37,6 @@ public class MedianFilter extends TileProcessingAlgorithm{
             }
         }
 
-        Random random = new Random();
-
-        try {
-            Thread.sleep(random.nextInt(0,200) + tile.height*tile.width/100);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
         return new ImageTile(tile.width, tile.height, 0, tile.image, tile.tileIndex, outputData);
     }
 
