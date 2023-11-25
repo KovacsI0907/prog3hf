@@ -4,6 +4,7 @@ import PngInput.PngLoader;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class TilingContext {
@@ -16,6 +17,8 @@ public class TilingContext {
     public final PngLoader imageLoader;
     public final ImageProcessingContext image;
     List<long[]> paddingBuffer = new ArrayList<>();
+
+    HashMap<Integer, long[]> loadedRows = new HashMap<>();
 
     public TilingContext(int tileHeight, int paddingSize, PngLoader imageLoader, ImageProcessingContext image) {
         this.image = image;
@@ -80,6 +83,10 @@ public class TilingContext {
     }
 
     public ImageTile getTileWithPadding() throws IOException {
+        if(currentTileIndex == 0 && numTiles == 1){
+            return getLastAndFirstPaddedTile();
+        }
+
         if(currentTileIndex == 0){
             return getFirstPaddedTile();
         }
@@ -88,21 +95,54 @@ public class TilingContext {
             return getLastPaddedTile();
         }
 
-        //tiles between
-        for(int i = 0;i<tileHeight;i++){
-            paddingBuffer.addLast(imageLoader.decodeNextRow());
-        }
+        //check if there will be enough rows to load
+        int rowsLeft = image.imageHeight - currentTileIndex*tileHeight - paddingSize;
+        long[][] pixelData;
+        if(rowsLeft < tileHeight){
+            for(int i = 0;i<rowsLeft;i++){
+                paddingBuffer.addLast(imageLoader.decodeNextRow());
+            }
+            int toMirror = tileHeight-rowsLeft;
+            List<long[]> mirrored = mirrorLower(toMirror);
 
-        long[][] pixelData = new long[paddingBuffer.size()][];
-        for(int i = 0; i< paddingBuffer.size(); i++){
-            pixelData[i] = mirrorPadRow(paddingBuffer.get(i));
-        }
+            pixelData = new long[paddingBuffer.size() + mirrored.size()][];
+            for(int i = 0; i< paddingBuffer.size(); i++){
+                pixelData[i] = mirrorPadRow(paddingBuffer.get(i));
+            }
 
-        while(paddingBuffer.size() > paddingSize*2){
-            paddingBuffer.removeFirst();
+            for(int i = 0;i<mirrored.size();i++){
+                pixelData[i + paddingBuffer.size()] = mirrorPadRow(mirrored.get(i));
+            }
+
+            int lastTileHeight = image.imageHeight - (numTiles-1)*tileHeight;
+            while(paddingBuffer.size() > lastTileHeight + paddingSize){
+                paddingBuffer.removeFirst();
+            }
+        }else{
+            for(int i = 0;i<tileHeight;i++){
+                paddingBuffer.addLast(imageLoader.decodeNextRow());
+            }
+
+            pixelData = new long[paddingBuffer.size()][];
+            for(int i = 0; i< paddingBuffer.size(); i++){
+                pixelData[i] = mirrorPadRow(paddingBuffer.get(i));
+            }
+
+            while(paddingBuffer.size() > paddingSize*2){
+                paddingBuffer.removeFirst();
+            }
         }
 
         return new ImageTile(imageLoader.imageInfo.width, tileHeight, paddingSize, image, currentTileIndex, pixelData);
+    }
+
+    private List<long[]> mirrorLower(int howMany){
+        List<long[]> result = new ArrayList<>();
+        for(int i = paddingBuffer.size()-1;i>=paddingBuffer.size()-howMany;i--){
+            result.addLast(paddingBuffer.get(i));
+        }
+
+        return result;
     }
 
     private ImageTile getFirstPaddedTile() throws IOException {
@@ -151,6 +191,28 @@ public class TilingContext {
         }
         //clean up
         paddingBuffer.clear();
+
+        return new ImageTile(imageLoader.imageInfo.width, pixelData.length - 2*paddingSize, paddingSize, image, currentTileIndex, pixelData);
+    }
+
+    private ImageTile getLastAndFirstPaddedTile() throws IOException {
+        List<long[]> endPadding = new ArrayList<>();
+        for(int i = 0;i< image.imageHeight;i++){
+            long[] row = imageLoader.decodeNextRow();
+            if(i<paddingSize){
+                paddingBuffer.addFirst(row);
+            }
+            paddingBuffer.addLast(row);
+            if((i>=image.imageHeight-paddingSize)){
+                endPadding.addFirst(row);
+            }
+        }
+        paddingBuffer.addAll(endPadding);
+
+        long[][] pixelData = new long[paddingBuffer.size()][];
+        for(int i = 0;i<pixelData.length;i++){
+            pixelData[i] = mirrorPadRow(paddingBuffer.get(i));
+        }
 
         return new ImageTile(imageLoader.imageInfo.width, pixelData.length - 2*paddingSize, paddingSize, image, currentTileIndex, pixelData);
     }

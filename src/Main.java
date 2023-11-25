@@ -2,6 +2,7 @@ import ImageProcessingAlgorithms.MedianFilter;
 import ParallelImageProcessing.*;
 import PngInput.*;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -24,10 +25,17 @@ public class Main {
         // Load the image
         try {
             Deque<ImageProcessingContext> images = new ArrayDeque<>();
-            images.add(new ImageProcessingContext(new File("salt_and_pepper.png")));
+            /*images.add(new ImageProcessingContext(new File("salt_and_pepper.png")));
             images.add(new ImageProcessingContext(new File("test.png")));
             images.add(new ImageProcessingContext(new File("test2.png")));
-            ImageProcessingScheduler scheduler = new ImageProcessingScheduler(images, 5, 10, 60);
+            images.add(new ImageProcessingContext(new File("test3.png")));
+            images.add(new ImageProcessingContext(new File("test4.png")));*/
+
+            File bulkInputFolder = new File("bulk_input");
+            for(File image : bulkInputFolder.listFiles()){
+                images.add(new ImageProcessingContext(image, 15));
+            }
+            ImageProcessingScheduler scheduler = new ImageProcessingScheduler(images, 6, 10000, 60, new File("output"));
             scheduler.start();
             /*
             TilingContext tilingContext = new TilingContext(200, 1, new PngLoader(imageFile));

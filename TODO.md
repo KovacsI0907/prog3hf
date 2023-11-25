@@ -4,7 +4,7 @@
 - [x] better system for filtering functions
 - [ ] other color type and bit depth support
     - [x] variable bitPerPixel in filtering
-    - [ ] other
+    - [ ] 16 bit support
 - [ ] clean up PngInput.java
 - [ ] Rewrite main function
 - [x] Implement padding for image tiles
@@ -12,6 +12,11 @@
 - [ ] Clamp down 16 bit color OR implement support
 - [x] Lower tile and padding fix
 - [ ] Better exception handling in run() functions
+- [x] Grey line bug
+- [ ] refactor IDATLOADER line ~46
+- [ ] include outputwriter tiles in memory quota
+- [ ] rewrite getting tiles with padding
+- [ ] fix +1 padding needed
 
 |                           | Colour type | Allowed bit depths     |
 |---------------------------|-------------|------------------------|

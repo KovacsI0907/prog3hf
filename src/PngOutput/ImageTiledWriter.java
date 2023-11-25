@@ -20,12 +20,13 @@ public class ImageTiledWriter {
     DeflaterOutputStream deflaterOutputStream;
     ByteArrayOutputStream byteArrayOutputStream;
 
-    public ImageTiledWriter(ImageProcessingContext image) throws IOException {
+    public ImageTiledWriter(ImageProcessingContext image, File outputFolder) throws IOException {
+        if(!outputFolder.isDirectory()){
+            throw new RuntimeException("Output directory needs to be a directory");
+        }
         this.imageProcessingContext = image;
 
-        String fileNameWithoutExtension = image.imageFile.getName().replaceFirst("[.][^.]+$", "");
-        String newFileName = fileNameWithoutExtension + "_output.png";
-        this.outputFile = new File(image.imageFile.getParent(), newFileName);
+        this.outputFile = new File(outputFolder, image.imageFile.getName());
 
         this.tilesReady = new PriorityQueue<>(Comparator.comparingInt(ImageTile::getTileIndex));
         this.fileOutputStream = new FileOutputStream(outputFile);

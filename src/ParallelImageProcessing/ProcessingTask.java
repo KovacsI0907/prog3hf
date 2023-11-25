@@ -2,6 +2,7 @@ package ParallelImageProcessing;
 
 import ImageProcessingAlgorithms.TileProcessingAlgorithm;
 
+import javax.sound.midi.Soundbank;
 import java.util.Queue;
 
 public class ProcessingTask implements Runnable {
@@ -21,8 +22,12 @@ public class ProcessingTask implements Runnable {
 
     @Override
     public void run() {
-        processedTiles.add(algorithm.produceOutput(tile));
-
+        try {
+            processedTiles.add(algorithm.produceOutput());
+        }catch (Exception e){
+            e.printStackTrace();
+            System.out.println(tile.image.imageFile.getName());
+        }
         if(outputWriterThread.getState() == Thread.State.TIMED_WAITING){
             outputWriterThread.interrupt();
         }

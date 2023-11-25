@@ -9,26 +9,15 @@ import java.util.Random;
 
 public class MedianFilter extends TileProcessingAlgorithm{
 
-    public enum KERNEL_SIZE {
-        THREE,
-        FIVE,
-        SEVEN,
-        NINE
-    }
-
     int kernelSize;
 
-    public MedianFilter(KERNEL_SIZE kernelSize){
-        this.kernelSize = switch(kernelSize){
-            case THREE -> 3;
-            case FIVE -> 5;
-            case SEVEN -> 7;
-            case NINE -> 9;
-        };
+    public MedianFilter(MedianFilterParams params, ImageTile tile) {
+        super(params, tile);
+        kernelSize = params.kernelSize;
     }
 
     @Override
-    public ImageTile produceOutput(ImageTile tile) {
+    public ImageTile produceOutput() {
         long[][] outputData = new long[tile.height][tile.width];
 
         for(int y = 0;y<tile.height;y++){

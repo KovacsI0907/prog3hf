@@ -141,13 +141,8 @@ public class PngLoader {
         return bytesToLoad;
     }
     private void loadNextScanline() throws IOException {
-
-
         if(currentLine == null){
             currentLine = new UnsignedByte[getLineLengthInBytes() + 1]; // +1 for filter type byte
-        }
-        if(currentHeight == 98){
-            System.out.println();
         }
         Helper.readExactlyNUBytes(pngInflaterInputStream, currentLine.length, currentLine, 0);
         debugInt++;
@@ -364,13 +359,14 @@ public class PngLoader {
     }
     private long[] decodeTruecolor8(){
         long[] result = new long[imageInfo.width];
+        int helper = 0;
         for(int currentByte = 0;currentByte< imageInfo.width*3;currentByte+=3){
             long pixel = 0;
             pixel = pixel | 0xFFL << 24; //a
             pixel = pixel | (long)(currentUnfilteredLine[currentByte].value) << 16;   //r
             pixel = pixel | (long)(currentUnfilteredLine[currentByte+1].value) << 8;  //g
             pixel = pixel | (long)(currentUnfilteredLine[currentByte+2].value);       //b
-            result[currentByte/4] = pixel;
+            result[helper++] = pixel;
         }
 
         return result;

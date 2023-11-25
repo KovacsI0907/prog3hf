@@ -1,11 +1,14 @@
 package ParallelImageProcessing;
 
-import ImageProcessingAlgorithms.MedianFilter;
+import ImageProcessingAlgorithms.BilateralFilter;
+import ImageProcessingAlgorithms.BilateralFilterParams;
+import ImageProcessingAlgorithms.SobelOperator;
+import ImageProcessingAlgorithms.SobelParams;
 import PngOutput.OutputWriter;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Deque;
-import java.util.Queue;
 import java.util.concurrent.*;
 
 public class ImageProcessingScheduler {
@@ -15,22 +18,27 @@ public class ImageProcessingScheduler {
     private final BlockingQueue tilesSharedQueue;
     private final OutputWriter outputWriter;
 
+    private long startTime;
+    private long endTime;
+
     private final int MAX_THREADS;
     private final int MAX_LOADED_TILES;
     private final int SLEEP_MILLIS = 1000;
     private final int OVERALL_TIMEOUT_MINUTES;
 
-    public ImageProcessingScheduler(Deque<ImageProcessingContext> imagesToLoad, int maxThreads, int maxLoaded, int timeoutForAllTasksMinutes){
+    public ImageProcessingScheduler(Deque<ImageProcessingContext> imagesToLoad, int maxThreads, int maxLoaded, int timeoutForAllTasksMinutes, File outputDirectory){
         this.imagesToLoad = imagesToLoad;
         MAX_THREADS = maxThreads;
         MAX_LOADED_TILES = maxLoaded;
         OVERALL_TIMEOUT_MINUTES = timeoutForAllTasksMinutes;
+        //this.threadPool = new ThreadPoolExecutor(Math.min(MAX_THREADS, 5), MAX_THREADS, 1, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
         this.threadPool = new ThreadPoolExecutor(MAX_THREADS, MAX_THREADS, 1, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
         this.tilesSharedQueue = new LinkedBlockingDeque();
-        outputWriter = new OutputWriter(this.tilesSharedQueue);
+        outputWriter = new OutputWriter(this.tilesSharedQueue, outputDirectory);
         outputWriterThread = new Thread(outputWriter);
     }
     public void start() throws IOException {
+        startTime = System.currentTimeMillis();
         outputWriterThread.start();
 
         while(!imagesToLoad.isEmpty()){
@@ -67,20 +75,26 @@ public class ImageProcessingScheduler {
             outputWriterThread.interrupt();
         }
 
-
-        try {
-            while (outputWriterThread.isAlive()) {
+        while (outputWriterThread.isAlive()) {
+            try {
                 outputWriterThread.join();
+            } catch (InterruptedException ignored) {
+                //at this point there are no images left to load, so we continue waiting
             }
-        } catch (InterruptedException ignored) {
-            //at this point there are no images left to load, so we continue waiting
         }
+
+        endTime = System.currentTimeMillis();
+        long fullTime = endTime-startTime;
+        System.out.println("Tasks took:\n" + fullTime + "ms\n" + Math.round(fullTime/1000f) + "s\n" + Math.round(fullTime/60000f) + "m");
     }
 
     private boolean loadTilesOfImage(ImageProcessingContext ipc) throws IOException {
         while(ipc.tilingContext.hasNextTile() && loadedTilesNum() < MAX_LOADED_TILES){
-            ProcessingTask pt = new ProcessingTask(ipc.tilingContext.getNextTile(),
-                    new MedianFilter(MedianFilter.KERNEL_SIZE.THREE),
+            ImageTile tile = ipc.tilingContext.getNextTile();
+            ProcessingTask pt = new ProcessingTask(tile,
+                    //new MedianFilter(MedianFilter.KERNEL_SIZE.THREE),
+                    new BilateralFilter(new BilateralFilterParams(100, 5, 31), tile),
+                    //new SobelOperator(new SobelParams(30)),
                     outputWriterThread,
                     Thread.currentThread(),
                     tilesSharedQueue);
@@ -91,6 +105,6 @@ public class ImageProcessingScheduler {
     }
 
     private int loadedTilesNum() {
-        return threadPool.getActiveCount()  + threadPool.getQueue().size() + outputWriter.tilesInBufferNum();
+        return threadPool.getActiveCount()  + threadPool.getQueue().size();
     }
 }

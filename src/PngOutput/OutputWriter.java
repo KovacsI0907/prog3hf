@@ -1,8 +1,8 @@
 package PngOutput;
 
-import ParallelImageProcessing.ImageProcessingContext;
 import ParallelImageProcessing.ImageTile;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
@@ -12,9 +12,11 @@ public class OutputWriter implements Runnable{
     private PriorityQueue<ImageTiledWriter> imageWriters;
     boolean endOfStream;
     public final int WAIT_MILLIS = 1000;
+    public final File outputFolder;
 
-    public OutputWriter(BlockingQueue<ImageTile> imageTiles){
+    public OutputWriter(BlockingQueue<ImageTile> imageTiles, File outputFolder){
         this.tilesSharedQueue = imageTiles;
+        this.outputFolder = outputFolder;
         endOfStream = false;
         imageWriters = new PriorityQueue<>(Comparator.comparingInt(ImageTiledWriter::tilesLeft));
     }
@@ -77,7 +79,7 @@ public class OutputWriter implements Runnable{
             }
         }
 
-        ImageTiledWriter writer = new ImageTiledWriter(tile.image);
+        ImageTiledWriter writer = new ImageTiledWriter(tile.image, outputFolder);
         writer.tilesReady.add(tile);
         imageWriters.add(writer);
     }
@@ -86,13 +88,5 @@ public class OutputWriter implements Runnable{
 
     public void setEndOfStream(){
         endOfStream = true;
-    }
-
-    public int tilesInBufferNum() {
-        int tilesNum = tilesSharedQueue.size();
-        for(ImageTiledWriter writer : imageWriters){
-            tilesNum += writer.tilesReady.size();
-        }
-        return tilesNum;
     }
 }

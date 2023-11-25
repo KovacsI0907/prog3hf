@@ -2,6 +2,7 @@ package PngInput;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 public class IDATLoader {
 
@@ -42,6 +43,17 @@ public class IDATLoader {
             PngLogger.info("IDATLoader reached IEND");
             return false;
         }else if(!chunkType.equals("IDAT")){
+            Helper.readExactlyNBytes(is, (int)currentLength + 4);
+            do {
+                currentLength = Helper.readUint32(is);
+                chunkType = Helper.readChunkType(is);
+                if(chunkType.equals("IEND")){
+                    return false;
+                }else if(!chunkType.equals("IDAT")){
+                    Helper.readExactlyNBytes(is, (int)currentLength + 4);
+                }
+            }while(!chunkType.equals("IDAT"));
+
             throw new PngLoaderException("IDAT or IEND chunk expected, got '" + chunkType + "'");
         }
 
