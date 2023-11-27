@@ -1,12 +1,16 @@
 package gui;
 
+import ParallelImageProcessing.ImageProcessingContext;
+
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 
-public class ResourcesCard extends JPanel implements ActionListener {
+public class ResourcesCard extends JPanel implements ActionListener, ChangeListener {
 
     JButton backButton = new JButton("Back");
     JButton saveButton = new JButton("Save");
@@ -14,22 +18,24 @@ public class ResourcesCard extends JPanel implements ActionListener {
     JSpinner threadsSpinner;
     JSpinner memorySpinner;
     Logger logger;
-    JFrame parent;
+
+    JLabel errorLabel = new JLabel("");
     public ResourcesCard(JPanel cardsPanel, Logger logger){
         super(new BorderLayout());
 
-        this.parent = parent;
         this.logger = logger;
 
         this.cardsPanel = cardsPanel;
         backButton.addActionListener(this);
         saveButton.addActionListener(this);
 
-        SpinnerModel threadSpinnerModel = new SpinnerNumberModel(4, 1, 512, 1);
+        SpinnerModel threadSpinnerModel = new SpinnerNumberModel(UserPreferences.getInstance().threadCount, 1, 512, 1);
         threadsSpinner = new JSpinner(threadSpinnerModel);
+        threadsSpinner.addChangeListener(this);
 
-        SpinnerModel memorySpinnerModel = new SpinnerNumberModel(1024, 256, (int)(0.8*Runtime.getRuntime().maxMemory()/1024/1024), 32);
+        SpinnerModel memorySpinnerModel = new SpinnerNumberModel(UserPreferences.getInstance().memorySize, 64, (int)(0.8*Runtime.getRuntime().maxMemory()/1024/1024), 32);
         memorySpinner = new JSpinner(memorySpinnerModel);
+        memorySpinner.addChangeListener(this);
 
         JLabel mainLabel = new JLabel("Set resource limits", JLabel.CENTER);
         JLabel threadLabel = new JLabel("Maximum threads:");
@@ -54,6 +60,7 @@ public class ResourcesCard extends JPanel implements ActionListener {
         JPanel spinnerPanel2 = new JPanel();
         middleBox.add(spinnerPanel2);
         spinnerPanel2.add(memorySpinner);
+        middleBox.add(errorLabel);
 
         JPanel lowerBox = new JPanel();
         lowerBox.add(backButton);
@@ -62,6 +69,9 @@ public class ResourcesCard extends JPanel implements ActionListener {
         this.add(mainLabel, BorderLayout.NORTH);
         this.add(middleBox, BorderLayout.CENTER);
         this.add(lowerBox, BorderLayout.SOUTH);
+
+        saveButton.setEnabled(verify());
+        errorLabel.setForeground(Color.RED);
     }
 
     @Override
@@ -85,6 +95,21 @@ public class ResourcesCard extends JPanel implements ActionListener {
 
             CardLayout cl = (CardLayout) cardsPanel.getLayout();
             cl.show(cardsPanel, GuiConstants.CHOOSE_INPUT_CARD);
+        }
+    }
+
+    public boolean verify() {
+        return ImageProcessingContext.memoryRequiredForSmoothOperation((int)threadsSpinner.getValue()) < (int)memorySpinner.getValue();
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent changeEvent) {
+        if(verify()){
+            saveButton.setEnabled(true);
+            errorLabel.setText("");
+        }else{
+            saveButton.setEnabled(false);
+            errorLabel.setText("Memory limit too low for this many threads");
         }
     }
 }

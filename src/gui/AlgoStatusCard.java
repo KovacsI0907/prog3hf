@@ -37,9 +37,22 @@ public class AlgoStatusCard extends JPanel implements ActionListener {
         this.add(nextPrevPanel, BorderLayout.SOUTH);
     }
     public void startScheduler(Deque<ImageProcessingContext> imageProcessingContexts, AlgorithmParameters parameters, String algorithmID){
-        ImageProcessingScheduler scheduler = new ImageProcessingScheduler(imageProcessingContexts, UserPreferences.getInstance().threadCount, 10000, 60, new File("output"), parameters, algorithmID, this);
+        ImageProcessingScheduler scheduler = new ImageProcessingScheduler(imageProcessingContexts, UserPreferences.getInstance().threadCount, 60, new File("output"), parameters, algorithmID, this);
         Thread schedulerThread = new Thread(scheduler);
         schedulerThread.start();
+        Thread memoryMonitor = new Thread(() -> {
+            while(true){
+                int currentUsage = (int) ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024*1024));
+                System.out.println("MEM: " + currentUsage + "/" + UserPreferences.getInstance().memorySize);
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
+        memoryMonitor.start();
         logger.logGreen("Starting scheduler with " + UserPreferences.getInstance().threadCount + " threads and " + UserPreferences.getInstance().memorySize + "MBs of memory");
 
         mainProgressBar.setMaximum(imageProcessingContexts.size());

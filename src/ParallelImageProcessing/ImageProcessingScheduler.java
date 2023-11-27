@@ -3,6 +3,7 @@ package ParallelImageProcessing;
 import ImageProcessingAlgorithms.*;
 import PngOutput.OutputWriter;
 import gui.AlgoStatusCard;
+import gui.UserPreferences;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,30 +14,28 @@ public class ImageProcessingScheduler implements Runnable{
     public final Deque<ImageProcessingContext> imagesToLoad;
     private final ThreadPoolExecutor threadPool;
     private final Thread outputWriterThread;
-    private final BlockingQueue tilesSharedQueue;
+    private final BlockingQueue<ImageTile> tilesSharedQueue;
     private final OutputWriter outputWriter;
 
     private long startTime;
     private long endTime;
 
     private final int MAX_THREADS;
-    private final int MAX_LOADED_TILES;
     private final int SLEEP_MILLIS = 1000;
     private final int OVERALL_TIMEOUT_MINUTES;
     public  final AlgorithmParameters algorithmParameters;
     public final String algorithmID;
     public final AlgoStatusCard algoStatusCard;
 
-    public ImageProcessingScheduler(Deque<ImageProcessingContext> imagesToLoad, int maxThreads, int maxLoaded, int timeoutForAllTasksMinutes, File outputDirectory, AlgorithmParameters algorithmParameters, String algorithmID, AlgoStatusCard algoStatusCard){
+    public ImageProcessingScheduler(Deque<ImageProcessingContext> imagesToLoad, int maxThreads, int timeoutForAllTasksMinutes, File outputDirectory, AlgorithmParameters algorithmParameters, String algorithmID, AlgoStatusCard algoStatusCard){
         this.imagesToLoad = imagesToLoad;
         MAX_THREADS = maxThreads;
-        MAX_LOADED_TILES = maxLoaded;
         OVERALL_TIMEOUT_MINUTES = timeoutForAllTasksMinutes;
         this.algorithmParameters = algorithmParameters;
         this.algorithmID = algorithmID;
         this.algoStatusCard = algoStatusCard;
         this.threadPool = new ThreadPoolExecutor(MAX_THREADS, MAX_THREADS, 1, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
-        this.tilesSharedQueue = new LinkedBlockingDeque();
+        this.tilesSharedQueue = new LinkedBlockingDeque<>();
         outputWriter = new OutputWriter(this.tilesSharedQueue, outputDirectory, algoStatusCard);
         outputWriterThread = new Thread(outputWriter);
     }
@@ -57,7 +56,7 @@ public class ImageProcessingScheduler implements Runnable{
                 freeResourcesOf(ipc);
             }
 
-            if(loadedTilesNum() >= MAX_LOADED_TILES && !imagesToLoad.isEmpty()){
+            if(!ImageProcessingContext.canLoadNextTile() || !imagesToLoad.isEmpty()){
                 try {
                     Thread.sleep(SLEEP_MILLIS);
                 } catch (InterruptedException ignored) {
@@ -106,7 +105,7 @@ public class ImageProcessingScheduler implements Runnable{
     }
 
     private boolean loadTilesOfImage(ImageProcessingContext ipc) throws IOException {
-        while(ipc.tilingContext.hasNextTile() && loadedTilesNum() < MAX_LOADED_TILES){
+        while(ipc.tilingContext.hasNextTile() && ImageProcessingContext.canLoadNextTile()){
             ImageTile tile = ipc.tilingContext.getNextTile();
             ProcessingTask pt = new ProcessingTask(tile,
                     AlgorithmFactory.getAlgorithm(algorithmID, algorithmParameters, tile),
@@ -119,9 +118,6 @@ public class ImageProcessingScheduler implements Runnable{
         return !ipc.tilingContext.hasNextTile();
     }
 
-    private int loadedTilesNum() {
-        return threadPool.getActiveCount()  + threadPool.getQueue().size();
-    }
 
     @Override
     public void run() {

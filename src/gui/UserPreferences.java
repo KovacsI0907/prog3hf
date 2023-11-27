@@ -31,13 +31,13 @@ public class UserPreferences implements Serializable {
     }
 
     public static void savePreferences(UserPreferences prefs) throws IOException {
-        FileOutputStream fos = new FileOutputStream("defaultPrefs.ser");
+        FileOutputStream fos = new FileOutputStream("userPrefs.ser");
         ObjectOutputStream oos = new ObjectOutputStream(fos);
         oos.writeObject(prefs);
         oos.close();
     }
 
-    public static UserPreferences getInstance() {
+    synchronized public static UserPreferences getInstance() {
         if(instance == null){
             try{
                 instance = loadUserPrefs();
@@ -59,7 +59,7 @@ public class UserPreferences implements Serializable {
         return instance;
     }
 
-    public static void setInstance(UserPreferences instance) {
+    synchronized public static void setInstance(UserPreferences instance) {
         UserPreferences.instance = instance;
     }
 

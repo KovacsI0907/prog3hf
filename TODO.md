@@ -16,7 +16,9 @@
 - [ ] refactor IDATLOADER line ~46
 - [ ] include outputwriter tiles in memory quota
 - [ ] rewrite getting tiles with padding
-- [ ] fix +1 padding needed
+- [x] fix +1 padding needed
+- [ ] check if image size < kernel size
+- [ ] remove tiles of corrupted image
 
 |                           | Colour type | Allowed bit depths     |
 |---------------------------|-------------|------------------------|
