@@ -18,4 +18,12 @@ public class BilateralFilterParams extends AlgorithmParameters{
         this.spatialSigma = spatialSigma;
         this.kernelSize = kernelSize;
     }
+
+    @Override
+    public String toString() {
+        return "Bilateral Filter parameters:\n" +
+                "Intensity deviation=" + intensitySigma +
+                "\nSpatial deviation=" + spatialSigma +
+                "\nKernel size=" + kernelSize;
+    }
 }

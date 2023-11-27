@@ -16,15 +16,18 @@ public class ImageProcessingContext {
         this.tilingContext = new TilingContext(determineTileHeight(pngLoader.imageInfo.width, paddingSize), paddingSize, pngLoader, this);
         imageWidth = tilingContext.imageLoader.imageInfo.width;
         imageHeight = tilingContext.imageLoader.imageInfo.height;
+
+        if(pngLoader.imageInfo.width <= paddingSize+1 || pngLoader.imageInfo.height <= paddingSize+1){
+            throw new RuntimeException("Image is to small for this kernel/padding size");
+        }
     }
 
     private int determineTileHeight(int width, int paddingSize) {
-        //t*w = 130k
-        //approximately 1MB tiles
-        int h = 100000 / (width+2*paddingSize);
-        if(h<2*paddingSize){
-            h = 2*paddingSize;
-        }
-        return h;
+        int targetSize = 10*1024*1024 / 8; // bytes/bytesPerPixel -> 10MB / 8
+        // (w+2p)(h+2p) = pixels
+        // wh + 2pw + 2ph + 4p^2 = pixels
+        // h(w+2p) = pixels - 2pw + 4p^2
+        // h = (pixels -2pw + 4p^2) / (w+2p)
+        return (targetSize - 2*paddingSize*width + 4*paddingSize*paddingSize) / (width + 2*paddingSize);
     }
 }

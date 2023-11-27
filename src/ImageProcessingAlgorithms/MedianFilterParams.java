@@ -11,4 +11,10 @@ public class MedianFilterParams extends AlgorithmParameters{
 
         this.kernelSize = kernelSize;
     }
+
+    @Override
+    public String toString() {
+        return "Median Filter parameters:\n" +
+                "Kernel Size=" + kernelSize;
+    }
 }

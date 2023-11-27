@@ -13,4 +13,10 @@ public class SobelParams extends AlgorithmParameters{
 
         this.clampDownTreshold = clampDownTreshold;
     }
+
+    @Override
+    public String toString() {
+        return "Sobel Operator parameters:\n" +
+                "Clamping threshold=" + clampDownTreshold;
+    }
 }

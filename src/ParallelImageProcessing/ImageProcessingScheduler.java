@@ -1,17 +1,15 @@
 package ParallelImageProcessing;
 
-import ImageProcessingAlgorithms.BilateralFilter;
-import ImageProcessingAlgorithms.BilateralFilterParams;
-import ImageProcessingAlgorithms.SobelOperator;
-import ImageProcessingAlgorithms.SobelParams;
+import ImageProcessingAlgorithms.*;
 import PngOutput.OutputWriter;
+import gui.AlgoStatusCard;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Deque;
 import java.util.concurrent.*;
 
-public class ImageProcessingScheduler {
+public class ImageProcessingScheduler implements Runnable{
     public final Deque<ImageProcessingContext> imagesToLoad;
     private final ThreadPoolExecutor threadPool;
     private final Thread outputWriterThread;
@@ -25,27 +23,38 @@ public class ImageProcessingScheduler {
     private final int MAX_LOADED_TILES;
     private final int SLEEP_MILLIS = 1000;
     private final int OVERALL_TIMEOUT_MINUTES;
+    public  final AlgorithmParameters algorithmParameters;
+    public final String algorithmID;
+    public final AlgoStatusCard algoStatusCard;
 
-    public ImageProcessingScheduler(Deque<ImageProcessingContext> imagesToLoad, int maxThreads, int maxLoaded, int timeoutForAllTasksMinutes, File outputDirectory){
+    public ImageProcessingScheduler(Deque<ImageProcessingContext> imagesToLoad, int maxThreads, int maxLoaded, int timeoutForAllTasksMinutes, File outputDirectory, AlgorithmParameters algorithmParameters, String algorithmID, AlgoStatusCard algoStatusCard){
         this.imagesToLoad = imagesToLoad;
         MAX_THREADS = maxThreads;
         MAX_LOADED_TILES = maxLoaded;
         OVERALL_TIMEOUT_MINUTES = timeoutForAllTasksMinutes;
-        //this.threadPool = new ThreadPoolExecutor(Math.min(MAX_THREADS, 5), MAX_THREADS, 1, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
+        this.algorithmParameters = algorithmParameters;
+        this.algorithmID = algorithmID;
+        this.algoStatusCard = algoStatusCard;
         this.threadPool = new ThreadPoolExecutor(MAX_THREADS, MAX_THREADS, 1, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
         this.tilesSharedQueue = new LinkedBlockingDeque();
-        outputWriter = new OutputWriter(this.tilesSharedQueue, outputDirectory);
+        outputWriter = new OutputWriter(this.tilesSharedQueue, outputDirectory, algoStatusCard);
         outputWriterThread = new Thread(outputWriter);
     }
-    public void start() throws IOException {
+    public void start() {
         startTime = System.currentTimeMillis();
+        algoStatusCard.logger.log("Starting " + imagesToLoad.size() + " task(s)");
         outputWriterThread.start();
 
         while(!imagesToLoad.isEmpty()){
             ImageProcessingContext ipc = imagesToLoad.poll();
             //if image not finished
-            if(!loadTilesOfImage(ipc)){
-                imagesToLoad.offerFirst(ipc);
+            try {
+                if (!loadTilesOfImage(ipc)) {
+                    imagesToLoad.offerFirst(ipc);
+                }
+            }catch (IOException e){
+                algoStatusCard.logger.logRed("Error loading part of " + ipc.imageFile.getName());
+                freeResourcesOf(ipc);
             }
 
             if(loadedTilesNum() >= MAX_LOADED_TILES && !imagesToLoad.isEmpty()){
@@ -85,19 +94,25 @@ public class ImageProcessingScheduler {
 
         endTime = System.currentTimeMillis();
         long fullTime = endTime-startTime;
-        System.out.println("Tasks took:\n" + fullTime + "ms\n" + Math.round(fullTime/1000f) + "s\n" + Math.round(fullTime/60000f) + "m");
+        algoStatusCard.logger.logGreen("Finished tasks");
+        algoStatusCard.logger.log("Tasks took " + Math.round(fullTime/1000f) + " seconds to complete");
+        algoStatusCard.allowNextTask();
+    }
+
+    private void freeResourcesOf(ImageProcessingContext ipc) {
+        //TODO
+        algoStatusCard.logger.logRed("RESOURCE FREEING NOT IMPLEMENTED YET");
+        algoStatusCard.updateMainProgressBar();
     }
 
     private boolean loadTilesOfImage(ImageProcessingContext ipc) throws IOException {
         while(ipc.tilingContext.hasNextTile() && loadedTilesNum() < MAX_LOADED_TILES){
             ImageTile tile = ipc.tilingContext.getNextTile();
             ProcessingTask pt = new ProcessingTask(tile,
-                    //new MedianFilter(MedianFilter.KERNEL_SIZE.THREE),
-                    new BilateralFilter(new BilateralFilterParams(100, 5, 31), tile),
-                    //new SobelOperator(new SobelParams(30)),
+                    AlgorithmFactory.getAlgorithm(algorithmID, algorithmParameters, tile),
                     outputWriterThread,
                     Thread.currentThread(),
-                    tilesSharedQueue);
+                    tilesSharedQueue, algoStatusCard.logger);
             threadPool.submit(pt);
         }
 
@@ -106,5 +121,10 @@ public class ImageProcessingScheduler {
 
     private int loadedTilesNum() {
         return threadPool.getActiveCount()  + threadPool.getQueue().size();
+    }
+
+    @Override
+    public void run() {
+        this.start();
     }
 }

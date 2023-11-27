@@ -1,6 +1,7 @@
 package PngOutput;
 
 import ParallelImageProcessing.ImageTile;
+import gui.AlgoStatusCard;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,12 +14,14 @@ public class OutputWriter implements Runnable{
     boolean endOfStream;
     public final int WAIT_MILLIS = 1000;
     public final File outputFolder;
+    public final AlgoStatusCard algoStatusCard;
 
-    public OutputWriter(BlockingQueue<ImageTile> imageTiles, File outputFolder){
+    public OutputWriter(BlockingQueue<ImageTile> imageTiles, File outputFolder, AlgoStatusCard algoStatusCard){
         this.tilesSharedQueue = imageTiles;
         this.outputFolder = outputFolder;
         endOfStream = false;
         imageWriters = new PriorityQueue<>(Comparator.comparingInt(ImageTiledWriter::tilesLeft));
+        this.algoStatusCard = algoStatusCard;
     }
     @Override
     public void run() {
@@ -42,6 +45,7 @@ public class OutputWriter implements Runnable{
                 if(writer.isFinished()){
                     try {
                         writer.close();
+                        algoStatusCard.updateMainProgressBar();
                     } catch (IOException e) {
                         throw new RuntimeException(e.getMessage() + "\nError occured when closing output image");
                     }
