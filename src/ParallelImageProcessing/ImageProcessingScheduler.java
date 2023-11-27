@@ -3,11 +3,12 @@ package ParallelImageProcessing;
 import ImageProcessingAlgorithms.*;
 import PngOutput.OutputWriter;
 import gui.AlgoStatusCard;
-import gui.UserPreferences;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Deque;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.*;
 
 public class ImageProcessingScheduler implements Runnable{
@@ -16,31 +17,26 @@ public class ImageProcessingScheduler implements Runnable{
     private final Thread outputWriterThread;
     private final BlockingQueue<ImageTile> tilesSharedQueue;
     private final OutputWriter outputWriter;
-
-    private long startTime;
-    private long endTime;
-
-    private final int MAX_THREADS;
-    private final int SLEEP_MILLIS = 1000;
-    private final int OVERALL_TIMEOUT_MINUTES;
+    public final List<ImageProcessingContext> stoppedImageList = new LinkedList<>();
+    private final int overallTimeoutMinutes;
     public  final AlgorithmParameters algorithmParameters;
     public final String algorithmID;
     public final AlgoStatusCard algoStatusCard;
 
     public ImageProcessingScheduler(Deque<ImageProcessingContext> imagesToLoad, int maxThreads, int timeoutForAllTasksMinutes, File outputDirectory, AlgorithmParameters algorithmParameters, String algorithmID, AlgoStatusCard algoStatusCard){
         this.imagesToLoad = imagesToLoad;
-        MAX_THREADS = maxThreads;
-        OVERALL_TIMEOUT_MINUTES = timeoutForAllTasksMinutes;
+        overallTimeoutMinutes = timeoutForAllTasksMinutes;
         this.algorithmParameters = algorithmParameters;
         this.algorithmID = algorithmID;
         this.algoStatusCard = algoStatusCard;
-        this.threadPool = new ThreadPoolExecutor(MAX_THREADS, MAX_THREADS, 1, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
+        this.threadPool = new ThreadPoolExecutor(maxThreads, maxThreads, 1, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
         this.tilesSharedQueue = new LinkedBlockingDeque<>();
-        outputWriter = new OutputWriter(this.tilesSharedQueue, outputDirectory, algoStatusCard);
+
+        outputWriter = new OutputWriter(this.tilesSharedQueue, outputDirectory, algoStatusCard, stoppedImageList);
         outputWriterThread = new Thread(outputWriter);
     }
     public void start() {
-        startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis();
         algoStatusCard.logger.log("Starting " + imagesToLoad.size() + " task(s)");
         outputWriterThread.start();
 
@@ -53,12 +49,13 @@ public class ImageProcessingScheduler implements Runnable{
                 }
             }catch (IOException e){
                 algoStatusCard.logger.logRed("Error loading part of " + ipc.imageFile.getName());
-                freeResourcesOf(ipc);
+                stopProcessingImage(ipc);
             }
 
             if(!ImageProcessingContext.canLoadNextTile() || !imagesToLoad.isEmpty()){
                 try {
-                    Thread.sleep(SLEEP_MILLIS);
+                    int sleepMillis = 1000;
+                    Thread.sleep(sleepMillis);
                 } catch (InterruptedException ignored) {
                     //continue loading
                 }
@@ -69,9 +66,9 @@ public class ImageProcessingScheduler implements Runnable{
         boolean terminated = false;
         do{
             try {
-                terminated = threadPool.awaitTermination(OVERALL_TIMEOUT_MINUTES, TimeUnit.MINUTES);
+                terminated = threadPool.awaitTermination(overallTimeoutMinutes, TimeUnit.MINUTES);
                 if(!terminated){
-                    throw new RuntimeException("Tasks did not finish in over " + OVERALL_TIMEOUT_MINUTES + " minutes");
+                    throw new RuntimeException("Tasks did not finish in over " + overallTimeoutMinutes + " minutes");
                 }
             } catch (InterruptedException ignored) {
                 //at this point there are no images left to load, so we continue
@@ -91,16 +88,18 @@ public class ImageProcessingScheduler implements Runnable{
             }
         }
 
-        endTime = System.currentTimeMillis();
-        long fullTime = endTime-startTime;
+        long endTime = System.currentTimeMillis();
+        long fullTime = endTime - startTime;
         algoStatusCard.logger.logGreen("Finished tasks");
         algoStatusCard.logger.log("Tasks took " + Math.round(fullTime/1000f) + " seconds to complete");
         algoStatusCard.allowNextTask();
+        algoStatusCard.isRunning = false;
     }
 
-    private void freeResourcesOf(ImageProcessingContext ipc) {
-        //TODO
-        algoStatusCard.logger.logRed("RESOURCE FREEING NOT IMPLEMENTED YET");
+    private void stopProcessingImage(ImageProcessingContext ipc) {
+        synchronized (stoppedImageList){
+            stoppedImageList.add(ipc);
+        }
         algoStatusCard.updateMainProgressBar();
     }
 

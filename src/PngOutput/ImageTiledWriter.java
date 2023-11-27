@@ -241,4 +241,9 @@ public class ImageTiledWriter {
     public int tilesLeft() {
         return imageProcessingContext.tilingContext.numTiles - (lastTileWritten + 1);
     }
+
+    public void terminate() throws IOException {
+        fileOutputStream.close();
+        outputFile.delete();
+    }
 }

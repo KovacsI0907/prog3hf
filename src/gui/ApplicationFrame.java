@@ -10,6 +10,9 @@ public class ApplicationFrame extends JFrame implements ActionListener {
     private JPanel cardPanel;
 
     JMenuItem memOption = new JMenuItem("Memory and Multithreading");
+    JMenuItem exitOption = new JMenuItem("Quit (Unsafe while running)");
+
+    AlgoStatusCard algoStatusCard;
 
     public ApplicationFrame() {
         setTitle("Image Processor");
@@ -20,11 +23,9 @@ public class ApplicationFrame extends JFrame implements ActionListener {
         JMenu optionsMenu = new JMenu("Menu");
 
         memOption.addActionListener(this);
-        JMenuItem abortOption = new JMenuItem("Abort");
-        JMenuItem exitOption = new JMenuItem("Quit (Unsafe while running)");
+        exitOption.addActionListener(this);
 
         optionsMenu.add(memOption);
-        optionsMenu.add(abortOption);
         optionsMenu.add(exitOption);
 
         menuBar.add(optionsMenu);
@@ -35,7 +36,7 @@ public class ApplicationFrame extends JFrame implements ActionListener {
         cardPanel = new JPanel(cardLayout);
 
         Logger logger = new Logger();
-        AlgoStatusCard algoStatusCard = new AlgoStatusCard(cardPanel, logger);
+        algoStatusCard = new AlgoStatusCard(cardPanel, logger);
         FinalizeCard finalizeCard = new FinalizeCard(cardPanel, algoStatusCard, logger);
         ChooseInputCard chooseInputCard = new ChooseInputCard(cardPanel, finalizeCard);
         ChooseAlgorithmCard chooseAlgorithmCard = new ChooseAlgorithmCard(cardPanel, finalizeCard);
@@ -65,6 +66,11 @@ public class ApplicationFrame extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent actionEvent) {
         if(actionEvent.getSource() == memOption){
             cardLayout.show(cardPanel, GuiConstants.RESOURCES_CARD);
+        }
+
+        if(actionEvent.getSource() == exitOption){
+            this.dispose();
+            System.exit(0);
         }
     }
 }

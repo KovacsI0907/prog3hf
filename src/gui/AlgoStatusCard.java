@@ -17,6 +17,11 @@ public class AlgoStatusCard extends JPanel implements ActionListener {
     public final JProgressBar mainProgressBar;
     NextBackPanel nextPrevPanel;
 
+    ImageProcessingScheduler imageProcessingScheduler = null;
+    Thread schedulerThread = null;
+
+    public boolean isRunning = false;
+
     public AlgoStatusCard(JPanel cardsContainer, Logger logger){
         super(new BorderLayout());
 
@@ -37,22 +42,11 @@ public class AlgoStatusCard extends JPanel implements ActionListener {
         this.add(nextPrevPanel, BorderLayout.SOUTH);
     }
     public void startScheduler(Deque<ImageProcessingContext> imageProcessingContexts, AlgorithmParameters parameters, String algorithmID){
-        ImageProcessingScheduler scheduler = new ImageProcessingScheduler(imageProcessingContexts, UserPreferences.getInstance().threadCount, 60, new File("output"), parameters, algorithmID, this);
-        Thread schedulerThread = new Thread(scheduler);
+        imageProcessingScheduler = new ImageProcessingScheduler(imageProcessingContexts, UserPreferences.getInstance().threadCount, 60, new File("output"), parameters, algorithmID, this);
+        schedulerThread = new Thread(imageProcessingScheduler);
         schedulerThread.start();
-        Thread memoryMonitor = new Thread(() -> {
-            while(true){
-                int currentUsage = (int) ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024*1024));
-                System.out.println("MEM: " + currentUsage + "/" + UserPreferences.getInstance().memorySize);
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+        isRunning = true;
 
-        memoryMonitor.start();
         logger.logGreen("Starting scheduler with " + UserPreferences.getInstance().threadCount + " threads and " + UserPreferences.getInstance().memorySize + "MBs of memory");
 
         mainProgressBar.setMaximum(imageProcessingContexts.size());

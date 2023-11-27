@@ -1,5 +1,6 @@
 package PngOutput;
 
+import ParallelImageProcessing.ImageProcessingContext;
 import ParallelImageProcessing.ImageTile;
 import gui.AlgoStatusCard;
 
@@ -15,10 +16,12 @@ public class OutputWriter implements Runnable{
     public final int WAIT_MILLIS = 1000;
     public final File outputFolder;
     public final AlgoStatusCard algoStatusCard;
+    public final List<ImageProcessingContext> stoppedImageList;
 
-    public OutputWriter(BlockingQueue<ImageTile> imageTiles, File outputFolder, AlgoStatusCard algoStatusCard){
+    public OutputWriter(BlockingQueue<ImageTile> imageTiles, File outputFolder, AlgoStatusCard algoStatusCard, List<ImageProcessingContext> stoppedImageList){
         this.tilesSharedQueue = imageTiles;
         this.outputFolder = outputFolder;
+        this.stoppedImageList = stoppedImageList;
         endOfStream = false;
         imageWriters = new PriorityQueue<>(Comparator.comparingInt(ImageTiledWriter::tilesLeft));
         this.algoStatusCard = algoStatusCard;
@@ -69,13 +72,27 @@ public class OutputWriter implements Runnable{
     }
 
     private void fillWriters() throws IOException {
+        //check for dead writers
+        Iterator<ImageTiledWriter> writerIterator = imageWriters.iterator();
+        while(writerIterator.hasNext()){
+            ImageTiledWriter writer = writerIterator.next();
+            if(imageIsDead(writer.imageProcessingContext)){
+                writer.terminate();
+                writerIterator.remove();
+            }
+        }
+
+
         while(!tilesSharedQueue.isEmpty()){
             ImageTile tile = tilesSharedQueue.poll();
-            putTileIntoWriter(tile);
+            if(!imageIsDead(tile.image)) {
+                putTileIntoWriter(tile);
+            }
         }
     }
 
     private void putTileIntoWriter(ImageTile tile) throws IOException {
+
         for(ImageTiledWriter writer : imageWriters){
             if(writer.imageProcessingContext == tile.image){
                 writer.tilesReady.add(tile);
@@ -86,6 +103,12 @@ public class OutputWriter implements Runnable{
         ImageTiledWriter writer = new ImageTiledWriter(tile.image, outputFolder);
         writer.tilesReady.add(tile);
         imageWriters.add(writer);
+    }
+
+    private boolean imageIsDead(ImageProcessingContext ipc){
+        synchronized (stoppedImageList){
+            return stoppedImageList.contains(ipc);
+        }
     }
 
 
