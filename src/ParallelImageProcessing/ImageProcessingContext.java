@@ -47,7 +47,7 @@ public class ImageProcessingContext {
     public static boolean canLoadNextTile() {
         UserPreferences pref = UserPreferences.getInstance();
         int spaceForProcessing = ImageProcessingContext.TILE_SIZE_TARGET * (pref.threadCount) * 2; //Tile size * (threads + safety) * multiplier for processing
-        int maxUsage = (int) (pref.memorySize * 0.9) - spaceForProcessing;
+        int maxUsage = (int) (pref.memorySize * 0.85) - spaceForProcessing;
         int currentUsage = (int) ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/(1024*1024));
         int headroom = maxUsage - currentUsage;
 

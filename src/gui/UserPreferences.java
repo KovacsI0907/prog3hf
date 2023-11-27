@@ -44,12 +44,9 @@ public class UserPreferences implements Serializable {
             } catch (Exception e){
                 try{
                     instance = loadDefaults();
-                    if(instance.memorySize > (int) (Runtime.getRuntime().maxMemory()*0.8/1024/1024)){
-                        instance = new UserPreferences(instance.threadCount, (int) (Runtime.getRuntime().maxMemory()*0.8/1024/1024));
-                    }
                 } catch (IOException ex) {
                     //return default if all fails
-                    return new UserPreferences(4, (int) (Runtime.getRuntime().maxMemory()*0.8/1024/1024));
+                    return new UserPreferences(4, 1024);
                 } catch (ClassNotFoundException ex) {
                     throw new RuntimeException(ex);
                 }

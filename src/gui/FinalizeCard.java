@@ -4,6 +4,7 @@ import ParallelImageProcessing.ImageProcessingContext;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -40,12 +41,26 @@ public class FinalizeCard extends JPanel implements ActionListener{
         configTextArea = new JTextArea( 10, 30);
         configTextArea.setBackground(new Color(230,230,230,255));
         configTextArea.setEditable(false);
+        configTextArea.setBorder(new MatteBorder(5,5,5,5,new Color(230,230,230,255)));
         this.add(mainLabel, BorderLayout.NORTH);
 
+        JPanel middleBox = new JPanel();
+        middleBox.setLayout(new BoxLayout(middleBox, BoxLayout.Y_AXIS));
         JPanel panel = new JPanel();
         panel.add(configTextArea);
-        this.add(panel, BorderLayout.CENTER);
+        middleBox.add(panel);
+        middleBox.add(errorLabel);
+        middleBox.add(errorLabel2);
+        this.add(middleBox, BorderLayout.CENTER);
         this.add(nextPrevPanel, BorderLayout.SOUTH);
+
+        errorLabel.setForeground(Color.RED);
+        errorLabel2.setForeground(Color.RED);
+
+        errorLabel.setAlignmentX(CENTER_ALIGNMENT);
+        errorLabel2.setAlignmentX(CENTER_ALIGNMENT);
+
+        updateMemorySizeError();
     }
 
     public void updateConfigText() {
@@ -100,10 +115,18 @@ public class FinalizeCard extends JPanel implements ActionListener{
     }
 
     private boolean hasEnoughMemory() {
-        return Runtime.getRuntime().maxMemory()/1024/1024 > UserPreferences.getInstance().memorySize;
+        return (double) Runtime.getRuntime().maxMemory() /1024/1024 * 10/9 >= UserPreferences.getInstance().memorySize;
     }
 
     public void updateMemorySizeError() {
-        nextPrevPanel.nextButton.setEnabled(hasEnoughMemory());
+        if(hasEnoughMemory()){
+            nextPrevPanel.nextButton.setEnabled(true);
+            errorLabel.setText("");
+            errorLabel2.setText("");
+        }else{
+            nextPrevPanel.nextButton.setEnabled(false);
+            errorLabel.setText("Not enough memory to start!");
+            errorLabel2.setText("Try setting the JVM heap size or lower the memory limit.");
+        }
     }
 }

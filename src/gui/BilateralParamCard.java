@@ -22,6 +22,10 @@ public class BilateralParamCard extends JPanel implements InputVerifier{
         intensitySigmaField.setColumns(10);
         kernelSizeField.setColumns(10);
 
+        spatialSigmaField.setHorizontalAlignment(SwingConstants.CENTER);
+        intensitySigmaField.setHorizontalAlignment(SwingConstants.CENTER);
+        kernelSizeField.setHorizontalAlignment(SwingConstants.CENTER);
+
         JLabel comment1 = new JLabel("Kernel Size (odd integer, greater than 1, smaller than 51):");
         JLabel comment2 = new JLabel("Spatial Normal Deviation (positive real):");
         JLabel comment3 = new JLabel("Intensity Normal Deviation (positive real):");

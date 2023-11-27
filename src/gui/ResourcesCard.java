@@ -5,18 +5,20 @@ import ParallelImageProcessing.ImageProcessingContext;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultFormatter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 
-public class ResourcesCard extends JPanel implements ActionListener, ChangeListener {
+public class ResourcesCard extends JPanel implements ActionListener, InputVerifier {
 
     JButton backButton = new JButton("Back");
     JButton saveButton = new JButton("Save");
     JPanel cardsPanel;
-    JSpinner threadsSpinner;
-    JSpinner memorySpinner;
+
+    JTextField memoryField;
+    JTextField threadsField;
     Logger logger;
 
     FinalizeCard finalizeCard;
@@ -28,23 +30,23 @@ public class ResourcesCard extends JPanel implements ActionListener, ChangeListe
         this.logger = logger;
         this.finalizeCard = finalizeCard;
 
+        this.memoryField = new JTextField(UserPreferences.getInstance().memorySize + "", 10);
+        memoryField.getDocument().addDocumentListener(new VerifierDocumentListener(this));
+        memoryField.setHorizontalAlignment(SwingConstants.CENTER);
+
+        this.threadsField = new JTextField(UserPreferences.getInstance().threadCount + "", 10);
+        threadsField.getDocument().addDocumentListener(new VerifierDocumentListener(this));
+        threadsField.setHorizontalAlignment(SwingConstants.CENTER);
+
         this.cardsPanel = cardsPanel;
         backButton.addActionListener(this);
         saveButton.addActionListener(this);
-
-        SpinnerModel threadSpinnerModel = new SpinnerNumberModel(UserPreferences.getInstance().threadCount, 1, 512, 1);
-        threadsSpinner = new JSpinner(threadSpinnerModel);
-        threadsSpinner.addChangeListener(this);
-
-        SpinnerModel memorySpinnerModel = new SpinnerNumberModel(UserPreferences.getInstance().memorySize, 64, (int)(0.8*Runtime.getRuntime().maxMemory()/1024/1024), 32);
-        memorySpinner = new JSpinner(memorySpinnerModel);
-        memorySpinner.addChangeListener(this);
 
         JLabel mainLabel = new JLabel("Set resource limits", JLabel.CENTER);
         JLabel threadLabel = new JLabel("Maximum threads:");
         JLabel threadLabel2 = new JLabel("(should not be larger than number of logical cores in this machine):");
         JLabel memoryLabel = new JLabel("Maximum memory (MB):");
-        JLabel memoryLabel2 = new JLabel("(capped at 80% of max JVM heap size)");
+        JLabel memoryLabel2 = new JLabel("(Don't forget to set JVM heap size (-Xmx)");
 
         Font plainFont = new Font(mainLabel.getFont().getName(), Font.PLAIN, mainLabel.getFont().getSize());
         threadLabel2.setFont(plainFont);
@@ -55,14 +57,15 @@ public class ResourcesCard extends JPanel implements ActionListener, ChangeListe
 
         middleBox.add(threadLabel);
         middleBox.add(threadLabel2);
-        JPanel spinnerPanel1 = new JPanel();
-        middleBox.add(spinnerPanel1);
-        spinnerPanel1.add(threadsSpinner);
+        JPanel fieldPanel1 = new JPanel();
+        middleBox.add(fieldPanel1);
+        fieldPanel1.add(threadsField);
+
         middleBox.add(memoryLabel);
         middleBox.add(memoryLabel2);
-        JPanel spinnerPanel2 = new JPanel();
-        middleBox.add(spinnerPanel2);
-        spinnerPanel2.add(memorySpinner);
+        JPanel fieldPanel2 = new JPanel();
+        middleBox.add(fieldPanel2);
+        fieldPanel2.add(memoryField);
         middleBox.add(errorLabel);
 
         JPanel lowerBox = new JPanel();
@@ -86,35 +89,50 @@ public class ResourcesCard extends JPanel implements ActionListener, ChangeListe
 
         if(actionEvent.getSource() == saveButton){
             UserPreferences up;
-            up = new UserPreferences((int)threadsSpinner.getValue(), (int)memorySpinner.getValue());
+            up = new UserPreferences(Integer.parseInt(threadsField.getText()), Integer.parseInt(memoryField.getText()));
             try {
                 UserPreferences.savePreferences(up);
+                UserPreferences.setInstance(up);
                 logger.logGreen("Preferences saved.");
             } catch (IOException e) {
                 logger.logRed("Error saving preference file! Changes will be lost after restart.");
-            }finally {
-                UserPreferences.setInstance(up);
             }
 
             CardLayout cl = (CardLayout) cardsPanel.getLayout();
             cl.show(cardsPanel, GuiConstants.CHOOSE_INPUT_CARD);
-        }
-    }
 
-    public boolean verify() {
-        return ImageProcessingContext.memoryRequiredForSmoothOperation((int)threadsSpinner.getValue()) < (int)memorySpinner.getValue();
+            finalizeCard.updateMemorySizeError();
+        }
     }
 
     @Override
-    public void stateChanged(ChangeEvent changeEvent) {
-        if(verify()){
-            saveButton.setEnabled(true);
-            errorLabel.setText("");
-        }else{
-            saveButton.setEnabled(false);
-            errorLabel.setText("Memory limit too low for this many threads");
-        }
+    public boolean verify() {
+        try{
+            int mem = Integer.parseInt(memoryField.getText());
+            int thread = Integer.parseInt(threadsField.getText());
 
+            if(mem>=64 && mem < 1048576 && thread >= 1 && thread <= 512){
+                return mem*1.1 > ImageProcessingContext.memoryRequiredForSmoothOperation(thread);
+            }
+        }catch (Exception ignored){
+            return false;
+        }
+        return false;
+    }
+
+    @Override
+    public void action() {
+        saveButton.setEnabled(true);
+        finalizeCard.nextPrevPanel.nextButton.setEnabled(true);
+        errorLabel.setText("");
+        finalizeCard.updateMemorySizeError();
+    }
+
+    @Override
+    public void falseAction() {
+        saveButton.setEnabled(false);
+        finalizeCard.nextPrevPanel.nextButton.setEnabled(false);
+        errorLabel.setText("Memory is not enough for this many cores");
         finalizeCard.updateMemorySizeError();
     }
 }

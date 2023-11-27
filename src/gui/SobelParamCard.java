@@ -15,6 +15,7 @@ public class SobelParamCard extends JPanel implements InputVerifier{
 
         this.clampingThreshold = new JTextField();
         clampingThreshold.setColumns(10);
+        clampingThreshold.setHorizontalAlignment(SwingConstants.CENTER);
 
 
         JPanel panel = new JPanel();

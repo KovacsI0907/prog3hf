@@ -23,8 +23,8 @@ public class MedianParamCard extends JPanel implements InputVerifier {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         this.kernelSizeField = new JTextField();
-
         kernelSizeField.setColumns(10);
+        kernelSizeField.setHorizontalAlignment(SwingConstants.CENTER);
 
         JLabel comment1 = new JLabel("Kernel Size (odd integer, greater than 1, smaller than 51):");
 

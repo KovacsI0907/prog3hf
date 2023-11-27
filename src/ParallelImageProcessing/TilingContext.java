@@ -3,9 +3,7 @@ package ParallelImageProcessing;
 import PngInput.PngLoader;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class TilingContext {
     public final int numTiles;
@@ -16,7 +14,7 @@ public class TilingContext {
 
     public final PngLoader imageLoader;
     public final ImageProcessingContext image;
-    List<long[]> paddingBuffer = new ArrayList<>();
+    LinkedList<long[]> paddingBuffer = new LinkedList<>();
 
     HashMap<Integer, long[]> loadedRows = new HashMap<>();
 
@@ -137,7 +135,7 @@ public class TilingContext {
     }
 
     private List<long[]> mirrorLower(int howMany){
-        List<long[]> result = new ArrayList<>();
+        LinkedList<long[]> result = new LinkedList<>();
         for(int i = paddingBuffer.size()-1;i>=paddingBuffer.size()-howMany;i--){
             result.addLast(paddingBuffer.get(i));
         }
@@ -196,7 +194,7 @@ public class TilingContext {
     }
 
     private ImageTile getLastAndFirstPaddedTile() throws IOException {
-        List<long[]> endPadding = new ArrayList<>();
+        LinkedList<long[]> endPadding = new LinkedList<>();
         for(int i = 0;i< image.imageHeight;i++){
             long[] row = imageLoader.decodeNextRow();
             if(i<paddingSize){

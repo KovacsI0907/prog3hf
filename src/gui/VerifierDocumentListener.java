@@ -12,6 +12,8 @@ public class VerifierDocumentListener implements DocumentListener {
     public void insertUpdate(DocumentEvent documentEvent) {
         if(verifier.verify()){
             verifier.action();
+        }else{
+            verifier.falseAction();
         }
     }
 
@@ -19,6 +21,8 @@ public class VerifierDocumentListener implements DocumentListener {
     public void removeUpdate(DocumentEvent documentEvent) {
         if(verifier.verify()){
             verifier.action();
+        }else {
+            verifier.falseAction();
         }
     }
 
@@ -26,6 +30,8 @@ public class VerifierDocumentListener implements DocumentListener {
     public void changedUpdate(DocumentEvent documentEvent) {
         if(verifier.verify()){
             verifier.action();
+        }else{
+            verifier.falseAction();
         }
     }
 }
