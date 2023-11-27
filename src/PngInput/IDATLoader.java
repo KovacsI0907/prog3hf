@@ -6,10 +6,9 @@ import java.util.List;
 
 public class IDATLoader {
 
-    private InputStream is;
+    private final InputStream is;
     private long currentPos;
     private long currentLength;
-    private boolean endOfImage = false;
     private int debugCounter = 0;
 
     public IDATLoader(InputStream is) throws IOException {
@@ -22,7 +21,6 @@ public class IDATLoader {
     }
 
     private void skipCRC() throws IOException {
-        //TODO is it actually 4 bytes???
         Helper.readExactlyNBytes(is, 4);
     }
 
@@ -35,30 +33,20 @@ public class IDATLoader {
         PngLogger.info("Starting new IDAT after: currentPos: " + currentPos + " currentLength: " + currentLength + "\nstarted " + debugCounter + " times");
 
         currentPos = 0;
+
         currentLength = Helper.readUint32(is);
         String chunkType = Helper.readChunkType(is);
+        while(!(chunkType.equals("IDAT") || chunkType.equals("IEND"))){
+            //skip uninteresting data
+            Helper.readExactlyNBytes(is, (int)currentLength);
+            skipCRC();
 
-        if(chunkType.equals("IEND")){
-            endOfImage = true;
-            PngLogger.info("IDATLoader reached IEND");
-            return false;
-        }else if(!chunkType.equals("IDAT")){
-            Helper.readExactlyNBytes(is, (int)currentLength + 4);
-            do {
-                currentLength = Helper.readUint32(is);
-                chunkType = Helper.readChunkType(is);
-                if(chunkType.equals("IEND")){
-                    return false;
-                }else if(!chunkType.equals("IDAT")){
-                    Helper.readExactlyNBytes(is, (int)currentLength + 4);
-                }
-            }while(!chunkType.equals("IDAT"));
-
-            throw new PngLoaderException("IDAT or IEND chunk expected, got '" + chunkType + "'");
+            //read next header
+            currentLength = Helper.readUint32(is);
+            chunkType = Helper.readChunkType(is);
         }
 
-        //at this point chunk is sure to be IDAT and the next byte read will be chunk data
-        return true;
+        return !chunkType.equals("IEND");
     }
 
     private long currentRemainingBytes() {
@@ -79,6 +67,7 @@ public class IDATLoader {
                 Helper.readExactlyNBytes(is, remainingFromCurrent, buffer, offset+bytesLoaded);
                 currentPos += remainingFromCurrent;
                 bytesLoaded += remainingFromCurrent;
+
                 //chunk is depleted continue to next one
                 skipCRC();
                 if(!startNewIDAT()) {
