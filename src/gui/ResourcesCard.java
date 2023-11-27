@@ -19,11 +19,14 @@ public class ResourcesCard extends JPanel implements ActionListener, ChangeListe
     JSpinner memorySpinner;
     Logger logger;
 
+    FinalizeCard finalizeCard;
+
     JLabel errorLabel = new JLabel("");
-    public ResourcesCard(JPanel cardsPanel, Logger logger){
+    public ResourcesCard(JPanel cardsPanel, FinalizeCard finalizeCard, Logger logger){
         super(new BorderLayout());
 
         this.logger = logger;
+        this.finalizeCard = finalizeCard;
 
         this.cardsPanel = cardsPanel;
         backButton.addActionListener(this);
@@ -111,5 +114,7 @@ public class ResourcesCard extends JPanel implements ActionListener, ChangeListe
             saveButton.setEnabled(false);
             errorLabel.setText("Memory limit too low for this many threads");
         }
+
+        finalizeCard.updateMemorySizeError();
     }
 }

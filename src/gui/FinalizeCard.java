@@ -20,6 +20,8 @@ public class FinalizeCard extends JPanel implements ActionListener{
     private ChooseInputCard chooseInputCard = null;
     private ChooseAlgorithmCard chooseAlgorithmCard = null;
     private AlgoStatusCard algoStatusCard;
+    JLabel errorLabel = new JLabel("");
+    JLabel errorLabel2 = new JLabel("");
     Logger logger;
     public FinalizeCard(JPanel cardsContainer, AlgoStatusCard algoStatusCard, Logger logger) {
         super(new BorderLayout());
@@ -28,6 +30,7 @@ public class FinalizeCard extends JPanel implements ActionListener{
         this.algoStatusCard = algoStatusCard;
 
         nextPrevPanel = new NextBackPanel(cardsContainer, GuiConstants.PROCESSING_STATUS_CARD, GuiConstants.CHOOSE_ALGORITHM_CARD);
+        nextPrevPanel.nextButton.setEnabled(hasEnoughMemory());
         nextPrevPanel.nextButton.setText("Start");
         nextPrevPanel.nextButton.addActionListener(this);
 
@@ -94,5 +97,13 @@ public class FinalizeCard extends JPanel implements ActionListener{
 
     public void setChooseAlgorithmCard(ChooseAlgorithmCard chooseAlgorithmCard) {
         this.chooseAlgorithmCard = chooseAlgorithmCard;
+    }
+
+    private boolean hasEnoughMemory() {
+        return Runtime.getRuntime().maxMemory()/1024/1024 > UserPreferences.getInstance().memorySize;
+    }
+
+    public void updateMemorySizeError() {
+        nextPrevPanel.nextButton.setEnabled(hasEnoughMemory());
     }
 }

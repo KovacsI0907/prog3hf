@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="prog3hf:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/prog3hf_jar</output-path>
+    <root id="archive" name="prog3hf.jar">
+      <element id="module-output" name="prog3hf" />
+    </root>
+  </artifact>
+</component>

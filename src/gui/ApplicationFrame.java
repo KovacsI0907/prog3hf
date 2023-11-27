@@ -41,7 +41,7 @@ public class ApplicationFrame extends JFrame implements ActionListener {
         ChooseAlgorithmCard chooseAlgorithmCard = new ChooseAlgorithmCard(cardPanel, finalizeCard);
         finalizeCard.setChooseInputCard(chooseInputCard);
         finalizeCard.setChooseAlgorithmCard(chooseAlgorithmCard);
-        ResourcesCard resourcesCard = new ResourcesCard(cardPanel, logger);
+        ResourcesCard resourcesCard = new ResourcesCard(cardPanel, finalizeCard, logger);
 
         cardPanel.add(chooseInputCard, GuiConstants.CHOOSE_INPUT_CARD);
         cardPanel.add(chooseAlgorithmCard, GuiConstants.CHOOSE_ALGORITHM_CARD);
@@ -59,12 +59,6 @@ public class ApplicationFrame extends JFrame implements ActionListener {
         algoStatusCard.add(scrollPane);
 
         setVisible(true);
-    }
-
-
-    public static void main(String[] args) {
-        JFrame frame = new ApplicationFrame();
-        frame.setVisible(true);
     }
 
     @Override
