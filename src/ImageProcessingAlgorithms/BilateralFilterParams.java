@@ -1,5 +1,8 @@
 package ImageProcessingAlgorithms;
 
+/**
+ * A Bilateral filterhez tartozó paraméter tároló és ellenőrző
+ */
 public class BilateralFilterParams extends AlgorithmParameters{
     public final double intensitySigma;
     public final double spatialSigma;

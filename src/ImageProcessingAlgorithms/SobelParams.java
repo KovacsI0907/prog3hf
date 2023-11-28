@@ -1,5 +1,8 @@
 package ImageProcessingAlgorithms;
 
+/**
+ * A Sobel Operatorhoz tartozó paraméter tároló és ellenőrző
+ */
 public class SobelParams extends AlgorithmParameters{
     public final int clampDownTreshold;
 

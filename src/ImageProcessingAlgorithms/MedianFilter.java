@@ -7,6 +7,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Median Filter zajszűrő és simító algoritmus implementációja.
+ * Időkomplexitása: O(n*k*k), ahol n a kép mérete k pedig a kernel mérete
+ */
 public class MedianFilter extends TileProcessingAlgorithm{
 
     int kernelSize;

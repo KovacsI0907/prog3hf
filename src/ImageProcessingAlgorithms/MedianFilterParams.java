@@ -1,5 +1,8 @@
 package ImageProcessingAlgorithms;
 
+/**
+ * A Median filterhez tartozó paraméter tároló és ellenőrző
+ */
 public class MedianFilterParams extends AlgorithmParameters{
     public final int kernelSize;
     public MedianFilterParams(int kernelSize) {

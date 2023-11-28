@@ -2,6 +2,9 @@ package ImageProcessingAlgorithms;
 
 import ParallelImageProcessing.ImageTile;
 
+/**
+ * Osztály ami összefog egy képdarabot és a rajta futtatandó algoritmust
+ */
 public abstract class TileProcessingAlgorithm {
     public final AlgorithmParameters params;
     public final ImageTile tile;

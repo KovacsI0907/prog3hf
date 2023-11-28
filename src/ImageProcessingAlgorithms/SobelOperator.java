@@ -2,6 +2,10 @@ package ImageProcessingAlgorithms;
 
 import ParallelImageProcessing.ImageTile;
 
+/**
+ * Sobel Operator éldetekciós algoritmus implementációja
+ * Időkomplexitása: O(n)
+ */
 public class SobelOperator extends TileProcessingAlgorithm{
 
     public final int clampDownAt;

@@ -2,6 +2,10 @@ package ImageProcessingAlgorithms;
 
 import ParallelImageProcessing.ImageTile;
 
+/**
+ * Algoritmus objektumokat gyárt a megadott ID és paraméterek alapján.
+ * A GUI-val való kommunikáció miatt van rá szükség
+ */
 public final class AlgorithmFactory {
 
     public static class AlgorithmIDs {
@@ -10,6 +14,13 @@ public final class AlgorithmFactory {
         public static final String SOBEL_OPERATOR = "SOBEL_OPERATOR";
     }
 
+    /**
+     * Készít egy konkrét algoritmus objektumot. ami a megadott paraméterekkel rendelkezik
+     * @param algoId
+     * @param params
+     * @param tile
+     * @return
+     */
     public static TileProcessingAlgorithm getAlgorithm(String algoId, AlgorithmParameters params, ImageTile tile){
         return switch (algoId){
             case AlgorithmIDs.BILATERAL_FILTER -> new BilateralFilter((BilateralFilterParams) params, tile);

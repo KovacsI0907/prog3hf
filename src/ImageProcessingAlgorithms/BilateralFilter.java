@@ -2,6 +2,10 @@ package ImageProcessingAlgorithms;
 
 import ParallelImageProcessing.ImageTile;
 
+/**
+ * Bilateral filter zajszűrő és simító algoritmus implementációja.
+ * Időkomplexitása: O(n*k*k), ahol n a kép mérete k pedig a kernel mérete
+ */
 public class BilateralFilter extends TileProcessingAlgorithm{
 
     public final double spatialSigma;
