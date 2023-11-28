@@ -2,6 +2,10 @@ package ParallelImageProcessing;
 
 import java.awt.image.BufferedImage;
 
+/**
+ * Képdarabot tároló osztály.
+ * Általános formában tárolja a képeket, nem függ konkrét kiterjesztéstől (pl. png, jpeg)
+ */
 public class ImageTile {
     public final int height;
     public final int width;
@@ -10,13 +14,21 @@ public class ImageTile {
     public final ImageProcessingContext image;
     public final int tileIndex;
 
-    //TODO optimize for smaller channel sizes
     //we use int because it fits a 16 bit unsigned value
     //first 2 dimensions for X and Y
     //third dimension for storing all channels
     // (it's a 2d array of pixel channels)
     private long[][] pixelValues;
 
+    /**
+     * Inicializál egy képdarabot az adott adattömbből
+     * @param width
+     * @param height
+     * @param paddingSize
+     * @param image
+     * @param tileIndex
+     * @param pixelValues
+     */
     public ImageTile(int width, int height, int paddingSize, ImageProcessingContext image, int tileIndex, long[][] pixelValues) {
         this.image = image;
         this.tileIndex = tileIndex;
@@ -32,30 +44,22 @@ public class ImageTile {
         this.paddingSize = paddingSize;
     }
 
-    public BufferedImage getAsImage(){
-        BufferedImage image = new BufferedImage(this.width, this.height, BufferedImage.TYPE_INT_ARGB);
-
-        for(int y = 0;y<height;y++) {
-            for(int x = 0;x<width;x++){
-                image.setRGB(x,y, (int)pixelValues[y+paddingSize][x+paddingSize]);
-            }
-        }
-
-        return image;
+    public long[] getRow(int y) {
+        return pixelValues[y];
     }
 
-    public BufferedImage getAsImageWithPadding(){
-        BufferedImage image = new BufferedImage(this.width + 2*paddingSize, this.height + 2*paddingSize, BufferedImage.TYPE_INT_ARGB);
-
-        for(int y = 0;y<height + 2*paddingSize;y++) {
-            for(int x = 0;x<width + 2*paddingSize;x++){
-                image.setRGB(x,y, (int)pixelValues[y][x]);
-            }
-        }
-
-        return image;
+    public int getTileIndex(){
+        return tileIndex;
     }
 
+    /**
+     * a get* típusú függvények egy pixel adott csatornáját adják vissza
+     * a set* ugyanezt állítja
+     * a get*RO a padding-el rendelkező képek esetén a paddinget nem számítva értelmezi a koordínátákat
+     * @param x
+     * @param y
+     * @return
+     */
     public int getRed(int x, int y) {
         return (int) (pixelValues[y][x] >>> 16 & 0xFF);
     }
@@ -95,18 +99,6 @@ public class ImageTile {
         return pixelValues[y + paddingSize][x + paddingSize];
     }
 
-    public long getPixelIncludePadding(int x, int y){
-        return pixelValues[y][x];
-    }
-
-    public long[] getRow(int y) {
-        return pixelValues[y];
-    }
-
-    public int getTileIndex(){
-        return tileIndex;
-    }
-
     public int getRedRO(int x, int y) {
         return (int) (pixelValues[y + paddingSize][x + paddingSize] >>> 16 & 0xFF);
     }
@@ -122,8 +114,4 @@ public class ImageTile {
     public int getAlphaRO(int x, int y) {
         return (int) (pixelValues[y + paddingSize][x + paddingSize] >>> 24 & 0xFF);
     }
-    public int getPixelCount() {
-        return pixelValues.length;
-    }
-
 }

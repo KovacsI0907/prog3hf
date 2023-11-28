@@ -5,6 +5,9 @@ import PngInput.PngLoader;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * A képdarabok készítését és paddolását kezelő osztály
+ */
 public class TilingContext {
     public final int numTiles;
     public final int tileHeight;
@@ -29,6 +32,11 @@ public class TilingContext {
         this.currentTileIndex = 0;
     }
 
+    /**
+     * Visszaadja a sornkövetkező képdarabot
+     * @return A következő képdarab
+     * @throws IOException Hiba a kép betöltésénél
+     */
     public ImageTile getNextTile() throws IOException {
         ImageTile tile;
         if(paddingSize == 0){
@@ -41,9 +49,19 @@ public class TilingContext {
         return tile;
     }
 
+    /**
+     *
+     * @return Van-e következő képdarab
+     */
     public boolean hasNextTile() {
         return currentTileIndex != numTiles;
     }
+
+    /**
+     * Kap egy pixelsort és a két végére tükrözéssel padding-et tesz
+     * @param row A paddolni kívánt pixelsor
+     * @return A paddolt pixelsor
+     */
     private long[] mirrorPadRow(long[] row) {
         long[] padded = new long[row.length + 2*paddingSize];
 
@@ -66,6 +84,11 @@ public class TilingContext {
         return padded;
     }
 
+    /**
+     * padding nélük adja a következő képdarabot
+     * @return a következő képdarab
+     * @throws IOException Hiba a kép betöltésekor
+     */
     public ImageTile getTileWithoutPadding() throws IOException {
         int rowsToLoad = tileHeight;
         if(currentTileIndex == numTiles-1){
@@ -80,6 +103,11 @@ public class TilingContext {
         return new ImageTile(imageLoader.imageInfo.width, rowsToLoad, 0, image, currentTileIndex, pixelValues);
     }
 
+    /**
+     * paddingal adja a következő képdarabot
+     * @return a következő képdarab
+     * @throws IOException Hiba a kép betöltésekor
+     */
     public ImageTile getTileWithPadding() throws IOException {
         if(currentTileIndex == 0 && numTiles == 1){
             return getLastAndFirstPaddedTile();
@@ -134,6 +162,11 @@ public class TilingContext {
         return new ImageTile(imageLoader.imageInfo.width, tileHeight, paddingSize, image, currentTileIndex, pixelData);
     }
 
+    /**
+     * Segédfüggvény, ami a kép alját tükrözi
+     * @param howMany Hány sort tükrözzünk
+     * @return a tükrözött sorok
+     */
     private List<long[]> mirrorLower(int howMany){
         LinkedList<long[]> result = new LinkedList<>();
         for(int i = paddingBuffer.size()-1;i>=paddingBuffer.size()-howMany;i--){
@@ -143,6 +176,11 @@ public class TilingContext {
         return result;
     }
 
+    /**
+     * Segédfüggvény ami az első képdarabot adja
+     * @return A képdarab
+     * @throws IOException Hiba a képfájl betöltésekot
+     */
     private ImageTile getFirstPaddedTile() throws IOException {
         int rowsToLoad = tileHeight + paddingSize;
 
@@ -170,6 +208,11 @@ public class TilingContext {
         return new ImageTile(imageLoader.imageInfo.width, tileHeight, paddingSize, image, currentTileIndex, pixelData);
     }
 
+    /**
+     * Segédfüggvény ami az utolsó képdarabot adja
+     * @return A képdarab
+     * @throws IOException Hiba a képfájl betöltésekot
+     */
     private ImageTile getLastPaddedTile() throws IOException {
         int alreadyLoaded = (numTiles-1) * tileHeight + paddingSize;
         int rowsToLoad = imageLoader.imageInfo.height - alreadyLoaded;
@@ -193,6 +236,11 @@ public class TilingContext {
         return new ImageTile(imageLoader.imageInfo.width, pixelData.length - 2*paddingSize, paddingSize, image, currentTileIndex, pixelData);
     }
 
+    /**
+     * Segédfüggvény ami az az egyben első és utolső képdarabokat tölti be
+     * @return A képdarab
+     * @throws IOException Hiba a képfájl betöltésekot
+     */
     private ImageTile getLastAndFirstPaddedTile() throws IOException {
         LinkedList<long[]> endPadding = new LinkedList<>();
         for(int i = 0;i< image.imageHeight;i++){
