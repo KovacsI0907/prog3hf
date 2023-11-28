@@ -1,5 +1,7 @@
 package PngInput;
 
+import java.util.Objects;
+
 /**
  * Előjelnélküli byte osztály
  * Nincs rá szigorúan szükség, de megkönnyíti a fejlesztést, mert a compiler tudja ellenőrízni (cserébe nem memóriahatékony)
@@ -30,5 +32,18 @@ public class UnsignedByte {
 
     public static UnsignedByte fromIntMod256(int num){
         return new UnsignedByte(num%256);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UnsignedByte that = (UnsignedByte) o;
+        return value == that.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
     }
 }

@@ -17,7 +17,7 @@ public final class Helper {
      * @param offset Eltolás a pufferben
      * @throws IOException Ha a folyamban kevesebb byte van mint n
      */
-    static void readExactlyNUBytes(InputStream is, int n, UnsignedByte[] destBuf, int offset) throws IOException {
+    public static void readExactlyNUBytes(InputStream is, int n, UnsignedByte[] destBuf, int offset) throws IOException {
         byte[] bytes = new byte[n];
         readExactlyNBytes(is, n, bytes, 0);
         for(int i = 0;i<bytes.length;i++){
@@ -31,7 +31,7 @@ public final class Helper {
      * @param offset eltolás a pufferben
      * @return az érték egy long változóban
      */
-    static long uint32BytesToLong(byte[] byteArr, int offset) {
+    public static long uint32BytesToLong(byte[] byteArr, int offset) {
         if(offset + 4 > byteArr.length){
             throw new IllegalArgumentException();
         }
