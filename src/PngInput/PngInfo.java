@@ -3,7 +3,9 @@ package PngInput;
 import java.util.Arrays;
 import java.util.HashMap;
 
-//Class for storing png parameters and validating whether this type of image is supported.
+/**
+ * Osztály a Png kéket tulajdonságainak tárolására (pl.: magasság, szélesség, stb.)
+ */
 public class PngInfo {
     public PngInfo(int width, int height, byte bitDepth, byte colorType, byte compressionMethod, byte filterMethod, byte interlaceMethod) {
         int bytesPerPixel;
@@ -44,6 +46,10 @@ public class PngInfo {
                         "\ninterlace:   " + interlaceMethod + "\n";
     }
 
+    /**
+     * Megadja, hogy az ezen osztály szerinti tulajdonságok támogatottak-e a programban
+     * @return Támogatott-e a fájl
+     */
     public boolean validate() {
         if(width < 1 || height < 1){
             return false;

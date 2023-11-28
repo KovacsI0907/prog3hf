@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+/**
+ * Segédosztály, ami a PngInflaterInputStream-nek adagolja azokat az adatokat, amiket ki kell tömöríteni.
+ * Az IDAT chunkokból kiválasztja azokat az adatokat amiket az inflaternek kell adni
+ */
 public class IDATLoader {
 
     private final InputStream is;
@@ -20,13 +24,22 @@ public class IDATLoader {
         PngLogger.info("IDAT loader initialized");
     }
 
+    /**
+     * Eldobja a hibaellenőrző kód 4 bájtját
+     * @throws IOException Hibás fájl esetén
+     */
     private void skipCRC() throws IOException {
         Helper.readExactlyNBytes(is, 4);
     }
 
-    private boolean startNewIDAT() throws PngLoaderException, IOException {
+    /**
+     * Belekezd egy újabb IDAT chunkba, miután az előző véget ért
+     * @return bool, van-e még IDAT chunk
+     * @throws IOException Hibás fájl esetén
+     */
+    private boolean startNewIDAT() throws IOException {
         if(currentPos != currentLength){
-            throw new PngLoaderException("Attempt to start new IDAT before finishing other");
+            throw new IOException("Attempt to start new IDAT before finishing other");
         }
 
         debugCounter++;
@@ -49,11 +62,23 @@ public class IDATLoader {
         return !chunkType.equals("IEND");
     }
 
+    /**
+     *
+     * @return Hány bájt van hátra a jelenlegi IDAT chunkból
+     */
     private long currentRemainingBytes() {
         return currentLength - currentPos;
     }
 
 
+    /**
+     * Betölt a képből n kitömörítendő bájtot a megadott pufferbe
+     * @param buffer Ide jönnek a kitömörrítendő bájtok
+     * @param n ennyi bájtot töltünk
+     * @param offset puffer offset
+     * @return a ténylegesen betöltött bájtok száma
+     * @throws IOException Ha nincs N bájt a folyamban
+     */
     public int loadNBytes(byte[] buffer, int n, int offset) throws IOException {
         int bytesLoaded = 0;
 

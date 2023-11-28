@@ -6,6 +6,9 @@ import java.io.InputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
+/**
+ * Az InflaterInputStream leszármaztatása annyi változtatással, hogy a fill() függvényt egy IDATLoader-rel látjuk el
+ */
 public class PngInflaterInputStream extends InflaterInputStream {
     IDATLoader idatLoader;
 
@@ -25,11 +28,12 @@ public class PngInflaterInputStream extends InflaterInputStream {
         idatLoader = new IDATLoader(in);
     }
 
+    /**
+     * Amikor az InflaterInputStream-be épített Inflaternek inputra van szüksége, akkor IDATLoaderből betölt
+     * @throws IOException Ha az IDATLoader nem tud elég bájtot betölteni
+     */
     @Override
     protected void fill() throws IOException {
-        //TODO ensureOpen() is private, find replacement
-        //TODO find out if close() is necessary in this class
-
         this.len = idatLoader.loadNBytes(this.buf, this.buf.length, 0);
 
         if (this.len == -1) {

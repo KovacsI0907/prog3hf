@@ -5,19 +5,16 @@ import java.util.*;
 
 public class PngLoader {
     public final PngInfo imageInfo;
-
-    //index of the current unfiltered scanline
-    private int currentHeight;
-    int debugInt = 0;
     PngInflaterInputStream pngInflaterInputStream;
     UnsignedByte[] currentLine = null;
     UnsignedByte[] currentUnfilteredLine = null;
     UnsignedByte[] previousUnfilteredLine = null;
 
-    List<long[]> paddingBuffer = null;
-
-
-
+    /**
+     * Készít egy PngLoader-t és ellenőrzi, hogy a megadott fájl megfelelő formátumú-e
+     * @param imageFile A betöltendő PNG fájl
+     * @throws IOException Hibás, nem elérhető fájl esetén IOException
+     */
     public PngLoader(File imageFile) throws IOException {
         PngLogger.info("Reading file");
         FileInputStream fis = new FileInputStream(imageFile);
@@ -62,18 +59,29 @@ public class PngLoader {
         this.pngInflaterInputStream = new PngInflaterInputStream(bis);
         //init done
     }
+
+    /**
+     * Leellenőrzi a fájl eleji magic number-t
+     * @return Az aláírás megfelel-e PNG-nek
+     */
     boolean checkSignature(byte[] signature){
         byte[] officialSignature = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
         return Arrays.equals(signature, officialSignature);
     }
 
+    /**
+     * Beolvassa a kép metaadatait
+     * @param is Az olvasás innen történik
+     * @return A képadataokat tároló PngInfo objektum
+     * @throws IOException Ha sérült a fájl
+     */
     PngInfo readIHDR(InputStream is) throws IOException {
         byte[] lenBuf = Helper.readExactlyNBytes(is, 4);
-        byte[] typeBuf = Helper.readExactlyNBytes(is, 4);
+        String type = Helper.readChunkType(is);
+
         //read chunk length
         long length = Helper.uint32BytesToLong(lenBuf, 0);
         //read chunk type
-        String type = Helper.getChunkType(typeBuf);
         if(!type.equals("IHDR"))
             throw new RuntimeException("Chunk type not IHDR");
 
@@ -90,7 +98,11 @@ public class PngLoader {
         );
     }
 
-    //discards all chunks until the first IDAT
+    /**
+     * Elveti az összes nem IDAT chunkot
+     * @param bis Input stream amiről a file jön
+     * @throws IOException Sérült fájl esetén
+     */
     private void skipNonIDAT(BufferedInputStream bis) throws IOException {
         long length;
         String type;
@@ -108,11 +120,20 @@ public class PngLoader {
         }while(true);
     }
 
+    /**
+     * Elhagyja a hibaellenőrző kódot
+     * @param is Stream amiről a fájl jön
+     * @throws IOException Sérült fájl essetén
+     */
     private void skipCRC(InputStream is) throws IOException {
         Helper.readExactlyNBytes(is, 4);
         PngLogger.info("Skipping CRC");
     }
 
+    /**
+     * Megadja, hogy az aktuális kép típusa alapján hány bájtból áll a kép egy sora
+     * @return Hány bájtból áll egy sor
+     */
     private int getLineLengthInBytes() {
         int bytesToLoad;
 
@@ -140,15 +161,23 @@ public class PngLoader {
 
         return bytesToLoad;
     }
+
+    /**
+     * Betölti és közben kicsomagolja a következő sor bájtjait
+     * @throws IOException Sérült fájl esetén
+     */
     private void loadNextScanline() throws IOException {
         if(currentLine == null){
             currentLine = new UnsignedByte[getLineLengthInBytes() + 1]; // +1 for filter type byte
         }
         Helper.readExactlyNUBytes(pngInflaterInputStream, currentLine.length, currentLine, 0);
-        debugInt++;
-        PngLogger.info(debugInt + " scanlines loaded");
     }
 
+
+    /**
+     * Veszi következő kitömörített sort és dekódolja a pixeleken található filtert
+     * @throws IOException Sérült fájl esetén
+     */
     void getNextUnfilteredLine() throws IOException {
         previousUnfilteredLine = currentUnfilteredLine;
 
@@ -188,12 +217,17 @@ public class PngLoader {
 
             currentUnfilteredLine[i] = reconstructByte(currentLine[0], a, b, c, currentLine[i+1]);
         }
-
-        if(previousUnfilteredLine != null){
-            currentHeight++;
-        }
     }
 
+    /**
+     * Vesz egy bájtot és az ezzel szomszédos 3 bájtot és dekódolja az adott bájtra vonatkozó filtert
+     * @param filterTypeByte A bájtra vonatkozó filter típusa
+     * @param a Balra lévő pixel bájtja
+     * @param b Fent lévő pixel bájtja
+     * @param c Bal fenti pixel bájtja
+     * @param x A dekódolandó bájt
+     * @return A dekódolt bájtérték
+     */
     UnsignedByte reconstructByte(UnsignedByte filterTypeByte, UnsignedByte a, UnsignedByte b, UnsignedByte c, UnsignedByte x){
         return switch (filterTypeByte.value) {
             case 0 -> //NONE
@@ -210,6 +244,13 @@ public class PngLoader {
         };
     }
 
+    /**
+     * Dekódolási algoritmus a Paeth filtertípushoz
+     * @param a Balra lévő pixel bájtja
+     * @param b Fent lévő pixel bájtja
+     * @param c Bal fenti pixel bájtja
+     * @return A prediktor értéke
+     */
     UnsignedByte paethPredictor(UnsignedByte a, UnsignedByte b, UnsignedByte c){
         UnsignedByte Pr;
         int p = a.value + b.value - c.value;
@@ -228,21 +269,11 @@ public class PngLoader {
         return Pr;
     }
 
-    public static String intToHexWithFixedLength(int value) {
-        // Convert the integer to a hexadecimal string with leading zeros
-        String hexString = String.format("%08X", value);
-
-        // Insert spaces between pairs of characters (e.g., "00AABBCC" -> "00 AA BB CC")
-        StringBuilder formattedHex = new StringBuilder();
-        for (int i = 0; i < hexString.length(); i += 2) {
-            formattedHex.append(hexString, i, i + 2);
-            if (i + 2 < hexString.length()) {
-                formattedHex.append(" ");
-            }
-        }
-
-        return formattedHex.toString();
-    }
+    /**
+     * Össszefogja a különböző típusú képek sorainak dekódolását, ehhez tartozik a fájlban található többi hasonló nevű függvény
+     * @return pixelek a következő formátumban 0000ARGB, ahol minden betű 8 bitnek felel meg
+     * @throws IOException Sérült fájl esetén
+     */
     public long[] decodeNextRow() throws IOException {
         getNextUnfilteredLine();
         long[] row;
@@ -291,7 +322,6 @@ public class PngLoader {
         expandGreyscale(result);
         return result;
     }
-
     private void expandGreyscale(long[] values){
         for(int i = 0;i<values.length;i++){
             int max;
@@ -310,6 +340,7 @@ public class PngLoader {
             values[i] = pixel;
         }
     }
+
 
 
     private long[] decodeGreyscale8() {

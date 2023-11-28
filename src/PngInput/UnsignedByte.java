@@ -1,6 +1,9 @@
 package PngInput;
 
-
+/**
+ * Előjelnélküli byte osztály
+ * Nincs rá szigorúan szükség, de megkönnyíti a fejlesztést, mert a compiler tudja ellenőrízni (cserébe nem memóriahatékony)
+ */
 public class UnsignedByte {
     final short value;
 
@@ -11,7 +14,6 @@ public class UnsignedByte {
     }
 
     public UnsignedByte(int unsignedByteAsInt){
-        //TODO is this necessary???
         this.value = (short) unsignedByteAsInt;
         if(this.value > 255 || this.value < 0)
             throw new RuntimeException("Unsigned byte not within valid range");
