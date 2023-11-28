@@ -1,5 +1,9 @@
 package gui;
 
+/**
+ * A GUI-ban használt azonsoítók.
+ * Azért van, hogy elírásokból ne legyenek problémák
+ */
 public final class GuiConstants {
     public static final String CHOOSE_INPUT_CARD = "Choose input";
     public static final String CHOOSE_ALGORITHM_CARD = "Choose algorithm";

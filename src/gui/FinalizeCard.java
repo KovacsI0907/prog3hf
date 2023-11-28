@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+/**
+ * A algoritmus indítása előtti megerősítő panel
+ */
 public class FinalizeCard extends JPanel implements ActionListener{
 
     NextBackPanel nextPrevPanel;

@@ -12,6 +12,9 @@ import java.awt.image.Kernel;
 import java.io.File;
 import java.util.Deque;
 
+/**
+ * Az algoritmus állapotáról feedbacket adó panel
+ */
 public class AlgoStatusCard extends JPanel implements ActionListener {
     public final Logger logger;
     public final JProgressBar mainProgressBar;

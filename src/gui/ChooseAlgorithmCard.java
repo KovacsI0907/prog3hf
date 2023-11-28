@@ -10,6 +10,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
 
+/**
+ * Az algoritmmus kiválasztására szolgáló panel, ez használja, a Param kártyákat is
+ */
 public class ChooseAlgorithmCard extends JPanel implements ActionListener, InputVerifier {
     String[] algorithms = new String[]{GuiConstants.BILATERAL_FILTER, GuiConstants.MEDIAN_FILTER, GuiConstants.SOBEL_OPERATOR};
     HashMap<String, JPanel> paramCards;

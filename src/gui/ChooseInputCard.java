@@ -8,6 +8,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+/**
+ * Az input kiválasztására szolgáló panel
+ */
 public class ChooseInputCard extends JPanel implements ActionListener, InputVerifier {
     JLabel selectedLocationLabel = new JLabel("");
     JButton selectButton = new JButton("Select");

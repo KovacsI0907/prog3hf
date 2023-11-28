@@ -8,6 +8,9 @@ import javax.swing.text.NumberFormatter;
 import java.awt.*;
 import java.text.NumberFormat;
 
+/**
+ * A Sobel Operator paramétereit megjelenítő Panel
+ */
 public class SobelParamCard extends JPanel implements InputVerifier{
     public final JTextField clampingThreshold;
     public SobelParamCard() {

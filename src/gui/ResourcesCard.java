@@ -11,6 +11,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 
+/**
+ * A memória limit és szál szám választó felület JPanel-je
+ */
 public class ResourcesCard extends JPanel implements ActionListener, InputVerifier {
 
     JButton backButton = new JButton("Back");

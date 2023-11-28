@@ -3,6 +3,9 @@ package gui;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * Segédpanel ami a panelek alján található Next és Back gombokat tartalmazza
+ */
 public class NextBackPanel extends JPanel {
     public final JButton nextButton;
     public final JButton backButton;

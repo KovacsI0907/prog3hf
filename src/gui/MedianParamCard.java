@@ -17,6 +17,9 @@ import java.text.NumberFormat;
 import java.text.ParsePosition;
 import java.util.EventListener;
 
+/**
+ * A Median Fiter paramétereit megjelenítő Panel
+ */
 public class MedianParamCard extends JPanel implements InputVerifier {
     public final JTextField kernelSizeField;
     public MedianParamCard() {

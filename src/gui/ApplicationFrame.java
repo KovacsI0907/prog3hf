@@ -5,6 +5,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/**
+ * Az applikáció ablaka
+ */
 public class ApplicationFrame extends JFrame implements ActionListener {
     private CardLayout cardLayout;
     private JPanel cardPanel;
@@ -14,6 +17,9 @@ public class ApplicationFrame extends JFrame implements ActionListener {
 
     AlgoStatusCard algoStatusCard;
 
+    /**
+     * Létrehozza a menüt és a minden mást megjelenítő card layoutot
+     */
     public ApplicationFrame() {
         setTitle("Image Processor");
         setSize(450, 350);
@@ -62,6 +68,10 @@ public class ApplicationFrame extends JFrame implements ActionListener {
         setVisible(true);
     }
 
+    /**
+     * Kezeli a menünél kezdeményezett kilépést
+     * @param actionEvent
+     */
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         if(actionEvent.getSource() == memOption){

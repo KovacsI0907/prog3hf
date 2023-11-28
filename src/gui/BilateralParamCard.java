@@ -7,6 +7,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.text.NumberFormat;
 
+/**
+ * A Bilateral filter paramétereit megjelenítő Panel
+ */
 public class BilateralParamCard extends JPanel implements InputVerifier{
     public final JTextField spatialSigmaField;
     public final JTextField intensitySigmaField;
