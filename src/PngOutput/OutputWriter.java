@@ -43,7 +43,7 @@ public class OutputWriter implements Runnable{
             try {
                 fillWriters();
             } catch (IOException e) {
-                throw new RuntimeException(e.getMessage() + "\n Couldn't write header for output image");
+                algoStatusCard.logger.logRed("Couldn't write header for output image");
             }
 
             PriorityQueue<ImageTiledWriter> newQueue = new PriorityQueue<>(Comparator.comparingInt(ImageTiledWriter::tilesLeft));

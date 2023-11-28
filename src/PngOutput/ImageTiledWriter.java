@@ -27,9 +27,10 @@ public class ImageTiledWriter {
      */
     public ImageTiledWriter(ImageProcessingContext image) throws IOException {
         this.imageProcessingContext = image;
-        File outputFolder = image.imageFile.getParentFile();
-        if(!outputFolder.isDirectory()){
-            throw new IllegalStateException();
+        File parentDirectory = image.imageFile.getParentFile();
+        File outputFolder = new File(parentDirectory.getCanonicalPath() + "/output");
+        if(!outputFolder.exists()){
+            outputFolder.mkdirs();
         }
         this.outputFile = new File(outputFolder, image.imageFile.getName());
 
