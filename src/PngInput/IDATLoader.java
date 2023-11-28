@@ -39,29 +39,37 @@ public class IDATLoader {
      */
     private boolean startNewIDAT() throws IOException {
         if(currentPos != currentLength){
-            throw new IOException("Attempt to start new IDAT before finishing other");
+            throw new RuntimeException("Attempt to start new IDAT before finishing other");
         }
 
         debugCounter++;
         PngLogger.info("Starting new IDAT after: currentPos: " + currentPos + " currentLength: " + currentLength + "\nstarted " + debugCounter + " times");
 
         currentPos = 0;
-
         currentLength = Helper.readUint32(is);
         String chunkType = Helper.readChunkType(is);
-        while(!(chunkType.equals("IDAT") || chunkType.equals("IEND"))){
-            //skip uninteresting data
-            Helper.readExactlyNBytes(is, (int)currentLength);
-            skipCRC();
 
-            //read next header
-            currentLength = Helper.readUint32(is);
-            chunkType = Helper.readChunkType(is);
+        if(chunkType.equals("IEND")){
+            PngLogger.info("IDATLoader reached IEND");
+            return false;
+        }else if(!chunkType.equals("IDAT")){
+            Helper.readExactlyNBytes(is, (int)currentLength + 4);
+            do {
+                currentLength = Helper.readUint32(is);
+                chunkType = Helper.readChunkType(is);
+                if(chunkType.equals("IEND")){
+                    return false;
+                }else if(!chunkType.equals("IDAT")){
+                    Helper.readExactlyNBytes(is, (int)currentLength + 4);
+                }
+            }while(!chunkType.equals("IDAT"));
+
+            throw new RuntimeException("IDAT or IEND chunk expected, got '" + chunkType + "'");
         }
 
-        return !chunkType.equals("IEND");
+        //at this point chunk is sure to be IDAT and the next byte read will be chunk data
+        return true;
     }
-
     /**
      *
      * @return Hány bájt van hátra a jelenlegi IDAT chunkból
