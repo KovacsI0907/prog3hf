@@ -32,7 +32,7 @@ public class ImageProcessingScheduler implements Runnable{
         this.threadPool = new ThreadPoolExecutor(maxThreads, maxThreads, 1, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
         this.tilesSharedQueue = new LinkedBlockingDeque<>();
 
-        outputWriter = new OutputWriter(this.tilesSharedQueue, outputDirectory, algoStatusCard, stoppedImageList);
+        outputWriter = new OutputWriter(this.tilesSharedQueue, algoStatusCard, stoppedImageList);
         outputWriterThread = new Thread(outputWriter);
     }
     public void start() {

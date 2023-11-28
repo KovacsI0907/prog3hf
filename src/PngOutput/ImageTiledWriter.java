@@ -8,50 +8,63 @@ import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 
+/**
+ * Ez az osztály egy adott képhez tartozik. Az adott képhez tartozó képdarabokat megkapja majd kiírja egy fájlba.
+ */
 public class ImageTiledWriter {
     public final ImageProcessingContext imageProcessingContext;
     File outputFile;
     PriorityQueue<ImageTile> tilesReady;
     FileOutputStream fileOutputStream;
-
     int lastTileWritten = -1;
-
-    Deflater deflater;
     DeflaterOutputStream deflaterOutputStream;
     ByteArrayOutputStream byteArrayOutputStream;
 
-    public ImageTiledWriter(ImageProcessingContext image, File outputFolder) throws IOException {
-        if(!outputFolder.isDirectory()){
-            throw new RuntimeException("Output directory needs to be a directory");
-        }
+    /**
+     * Létrehozza az írandó fájlt és beleírja azokat az információkat, amikhez nem kell tényleges képadat
+     * @param image A képet leíró context
+     * @throws IOException Általános IO hiba
+     */
+    public ImageTiledWriter(ImageProcessingContext image) throws IOException {
         this.imageProcessingContext = image;
-
+        File outputFolder = image.imageFile.getParentFile();
+        if(!outputFolder.isDirectory()){
+            throw new IllegalStateException();
+        }
         this.outputFile = new File(outputFolder, image.imageFile.getName());
 
         this.tilesReady = new PriorityQueue<>(Comparator.comparingInt(ImageTile::getTileIndex));
         this.fileOutputStream = new FileOutputStream(outputFile);
 
-        deflater = new Deflater();
         byteArrayOutputStream = new ByteArrayOutputStream();
         deflaterOutputStream = new DeflaterOutputStream(byteArrayOutputStream, new Deflater(), 10);
 
         init();
     }
 
+    /**
+     * Kiírja a Png magic numbert és a tulajdonságotkat tartalmazó Image Header chunkot
+     * @throws IOException Sima IO hibáknál
+     */
     public void init() throws IOException {
         writeSignature();
         writeIHDR(imageProcessingContext.imageWidth, imageProcessingContext.imageHeight);
     }
 
+    /**
+     * Kirja a PNG magic numbert a fájlba
+     * @throws IOException Sima IO hibáknál
+     */
     private void writeSignature() throws IOException {
         byte[] signatureBytes = new byte[]{(byte)0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
         fileOutputStream.write(signatureBytes);
     }
 
-    public void tryWriteAll() throws IOException {
-        while(tryWriteNextTile());
-    }
-
+    /**
+     * Ellenőrzi, hogy pufferben van e a soron következő képdarab és ha igen, akkor kiírja a fájlba egyébkét nem csinál semmit.
+     * @return Tudott-e újabb képdarabot kiírni
+     * @throws IOException Általános IO hiba
+     */
     public boolean tryWriteNextTile() throws IOException {
         ImageTile nextTile = pollNextTile();
         if(nextTile == null){
@@ -86,12 +99,22 @@ public class ImageTiledWriter {
         return true;
     }
 
+    /**
+     * Kiírja a PNG fájlokat lezáró IEND chunkot és bezárja a folyamot
+     * @throws IOException Általános IO hiba
+     */
     public void close() throws IOException {
         writeIEND();
         fileOutputStream.close();
         System.out.println("Closed " + outputFile.getName());
     }
 
+    /**
+     * Kiírja az Image Header chunkot. Minden képhez ugyanazt írja, mert minden képet ugyanolyan fajta pngként mentünk
+     * @param width Kép szélessége
+     * @param height Kép magassága
+     * @throws IOException Általáno IO hiba
+     */
     void writeIHDR(int width, int height) throws IOException {
         writeChunkLength(13);
 
@@ -113,6 +136,11 @@ public class ImageTiledWriter {
         fileOutputStream.write(CRC32.calculateCRC(ihdrData));
     }
 
+    /**
+     * Veszi az adott adattömböt tömöríti és egy IDAT chunk belsejében kiírja
+     * @param data A kiírandó és tömörítendő adat
+     * @throws IOException Tömörítéssel kapcsolatos hibák (rossz bemenet esetén)
+     */
     void writeIDAT(byte[] data) throws IOException {
         byte[] compressedData = compressWithPrefix(data, new byte[]{'I', 'D', 'A', 'T'});
         writeChunkLength(compressedData.length-4);
@@ -120,31 +148,10 @@ public class ImageTiledWriter {
         fileOutputStream.write(CRC32.calculateCRC(compressedData));
     }
 
-    /*void writeIDAT(byte[] data) throws IOException {
-        byte[] compressedData = compressWithPrefix(data, new byte[]{'I', 'D', 'A', 'T'});
-        fileOutputStream.write(new byte[]{'L',while(!tilesSharedQueue.isEmpty()){
-                ImageTile tile = tilesSharedQueue.poll();
-                if(imageWriters.containsKey(tile.image)){
-                    imageWriters.get(tile.image).tilesReady.add(tile);
-                }else{
-                    try {
-                        imageWriters.put(tile.image, new ImageTiledWriter(tile.image));
-                        imageWriters.get(tile.image).tilesReady.add(tile);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            } 'E', 'N'});
-        writeChunkLength(compressedData.length-4);
-        fileOutputStream.write(new byte[]{'B', 'E', 'G'});
-        fileOutputStream.write(compressedData);
-        fileOutputStream.write(new byte[]{'C', 'R', 'C'});
-        fileOutputStream.write(CRC32.calculateCRC(compressedData));
-        fileOutputStream.write(new byte[]{'E', 'N', 'D'});
-
-        System.out.println();
-    }*/
-
+    /**
+     * Kiírja a képet lezáró IEND chunkot
+     * @throws IOException Általános IO hiba
+     */
     void writeIEND() throws IOException {
         writeChunkLength(0);
         byte[] typeBytes = new byte[]{'I', 'E', 'N', 'D'};
@@ -153,6 +160,11 @@ public class ImageTiledWriter {
     }
 
 
+    /**
+     * Kír egy 4 bájtos számot
+     * @param length integer ami ki lesz írva
+     * @throws IOException Általános IO hiba
+     */
     void writeChunkLength(int length) throws IOException {
         if(length < 0){
             throw new IllegalArgumentException("Length can not be negative");
@@ -170,40 +182,14 @@ public class ImageTiledWriter {
         array[offset + 3] = (byte) (value & 0xFF);
     }
 
-    /*public byte[] compressWithPrefix(byte[] input, byte[] prefix) throws IOException {
-        if (prefix.length != 4) {
-            throw new IllegalArgumentException("Prefix must be a byte array of length 4");
-        }
-
-        ByteArrayOutputStream outputBuffer = new ByteArrayOutputStream();
-
-        // Add 4-byte prefix at the beginning
-        outputBuffer.write(prefix);
-        deflater.setInput(input);
-        while(!deflater.needsInput()){
-            byte[] buf = new byte[8192];
-            int len = deflater.deflate(buf);
-
-            if(len > 0){
-                outputBuffer.write(buf, 0, len);
-            }
-        }
-
-        if(lastTileWritten == image.tilingContext.numTiles-2){
-            deflater.finish();
-            while(!deflater.finished()){
-                byte[] buf = new byte[8192];
-                int len = deflater.deflate(buf);
-
-                if(len > 0){
-                    outputBuffer.write(buf, 0, len);
-                }
-            }
-        }
-
-        return outputBuffer.toByteArray();
-    }*/
-
+    /**
+     * Bevesz egy adattömböt és egy prefixet, az adatot tömöríti a prefixet pedig beteszi a tömörített adat elé
+     * Tömörítés: DEFLATE
+     * @param input Tömörítendő adat
+     * @param prefix Prefix adat elé
+     * @return prefix + tömörített adat
+     * @throws IOException Általános IO hiba
+     */
     public byte[] compressWithPrefix(byte[] input, byte[] prefix) throws IOException {
         if (prefix.length != 4) {
             throw new IllegalArgumentException("Prefix must be a byte array of length 4");
@@ -222,6 +208,10 @@ public class ImageTiledWriter {
         return byteArrayOutputStream.toByteArray();
     }
 
+    /**
+     * Leveszi a queueból a következő képdarabot, ha az a következő a sorrendben
+     * @return A levett képdarab
+     */
     private ImageTile pollNextTile(){
         if(tilesReady.peek() == null) {
             return null;
@@ -234,14 +224,27 @@ public class ImageTiledWriter {
         return null;
     }
 
+    /**
+     * Visszaadja, hogy az író kész van-e
+     * @return Kész van-e ez az író
+     */
     boolean isFinished() {
         return lastTileWritten == imageProcessingContext.tilingContext.numTiles-1;
     }
 
+    /**
+     * Visszaadja, hogy hány képdarab van még hátra a kép végéig.
+     * Ez alapján döntjük el, hogy melyik képet írjuk legközelebb
+     * @return Hány képdarab van hátra
+     */
     public int tilesLeft() {
         return imageProcessingContext.tilingContext.numTiles - (lastTileWritten + 1);
     }
 
+    /**
+     * Félbeszakított kép esetén (mert pl. hibás volt a fájl vége, de ez csak akkor derült ki) bezárja a streamet és kitörli a hibás fájlt
+     * @throws IOException Általános IO hiba
+     */
     public void terminate() throws IOException {
         fileOutputStream.close();
         outputFile.delete();
