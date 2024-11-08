@@ -30,3 +30,9 @@ bin/
 
 ### Sonarlint ###
 .idea/sonarlint/
+
+# output folder
+output/
+
+# preferences file
+userPrefs.ser
