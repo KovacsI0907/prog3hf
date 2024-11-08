@@ -3,10 +3,13 @@
 This tool allows you to apply image processing algorithms to one or many PNG images efficiently.
 ## Features
 
-Parallel Processing: Choose the number of threads for processing images in parallel.
-Bulk Processing: Apply the same algorithm to hundreds of images at once.
-Efficient Memory Usage: Process images larger than available system RAM by streaming image data instead of loading it all at once. RAM usage for each processing job can be customized.
-Extensible Design: Implement new algorithms by extending the TileProcessingAlgorithm class.
+__Parallel Processing:__ Choose the number of threads for processing images in parallel.
+
+__Bulk Processing:__ Apply the same algorithm to hundreds of images at once.
+
+__Efficient Memory Usage:__ Process images larger than available system RAM by streaming image data instead of loading it all at once. RAM usage for each processing job can be customized.
+
+__Extensible Design:__ Implement new algorithms by extending the TileProcessingAlgorithm class.
 
 >[!NOTE]  
 >The project only supports algorithms that can process image tiles independently, such as convolution-based operations.
@@ -15,7 +18,7 @@ Extensible Design: Implement new algorithms by extending the TileProcessingAlgor
 ## How to Build
 
 No build system is required. You can compile with standard javac commands or use an IDE (like IntelliJ) to handle the setup automatically.
-Usage
+## Usage
 
 0. (Optional) Set RAM limit and thread count for the job.
 
