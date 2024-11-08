@@ -1,6 +1,12 @@
 # Parallel Bulk Image Processor
 
 This tool allows you to apply image processing algorithms to one or many PNG images efficiently.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/83c610a1-6b31-4aa5-8c9d-29192eeb81c9" width="256">
+  <img src="https://github.com/user-attachments/assets/d37e8801-9b7c-43fc-ad3e-f9f4db1d3f83" width="256">
+</p>
+
 ## Features
 
 __Parallel Processing:__ Choose the number of threads for processing images in parallel.
