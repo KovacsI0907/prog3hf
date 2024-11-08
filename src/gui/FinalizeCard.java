@@ -102,7 +102,11 @@ public class FinalizeCard extends JPanel implements ActionListener{
                 }
             }
 
-            algoStatusCard.startScheduler(imageProcessingContexts, chooseAlgorithmCard.getParameters(), chooseAlgorithmCard.getAlgorithmID());
+            try{
+                algoStatusCard.startScheduler(imageProcessingContexts, chooseAlgorithmCard.getParameters(), chooseAlgorithmCard.getAlgorithmID());
+            }catch (IOException ex) {
+                logger.logRed(ex.getMessage());
+            }
         }
     }
 

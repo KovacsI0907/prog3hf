@@ -10,6 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.Kernel;
 import java.io.File;
+import java.io.IOException;
 import java.util.Deque;
 
 public class AlgoStatusCard extends JPanel implements ActionListener {
@@ -41,7 +42,10 @@ public class AlgoStatusCard extends JPanel implements ActionListener {
 
         this.add(nextPrevPanel, BorderLayout.SOUTH);
     }
-    public void startScheduler(Deque<ImageProcessingContext> imageProcessingContexts, AlgorithmParameters parameters, String algorithmID){
+    public void startScheduler(Deque<ImageProcessingContext> imageProcessingContexts, AlgorithmParameters parameters, String algorithmID) throws IOException {
+        if(!new File("output").mkdirs()){
+            throw new IOException("Can't create output directory");
+        }
         imageProcessingScheduler = new ImageProcessingScheduler(imageProcessingContexts, UserPreferences.getInstance().threadCount, 60, new File("output"), parameters, algorithmID, this);
         schedulerThread = new Thread(imageProcessingScheduler);
         schedulerThread.start();
